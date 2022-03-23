@@ -15,4 +15,4 @@ TODO:
 - eventual bug fixes
 - code refactoring (i.e. the code is messy)
 - code documentation
-
+- find the definition of the "starter" window and add a label to divide the delay from the other parameters
