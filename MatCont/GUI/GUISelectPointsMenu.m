@@ -10,6 +10,7 @@ classdef GUISelectPointsMenu < handle
     
     methods
         function obj = GUISelectPointsMenu(parent, session, varargin)
+            %qui il sottomenu "initial point" in type
             obj.handle = uimenu(parent, 'Label' , 'Initial Point' , varargin{:});
             set(obj.handle,'DeleteFcn' , @(o,e) obj.destructor());
             IP = CLSettingIP();

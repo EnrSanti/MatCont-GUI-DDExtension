@@ -109,10 +109,13 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     %setto il valore corretto nella entry delledits
     if(strcmp(sys_type, 'DDE'))
         set(handles.noDiscPoints,'String',sprintf('%d',gds.no_discretizationPoints));
+        set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
         [r,~]=size(gds.parameters);
         pos=r-gds.no_delays+1;
         disp(strjoin(gds.parameters(pos:end,1),","));
         set(handles.delayPar,'String',strjoin(gds.parameters(pos:end,1),","));
+    else
+        set(handles.sys,'Tooltip','');
     end
     %-_-_-_-_-_-_%
     
@@ -1888,7 +1891,7 @@ function popupmenu3_CreateFcn(hObject, eventdata, handles)
     i=1;
     for el=types
        types(i)=strcat(el,sysString); 
-       i=i+1; %sintassi pignola... i++ no?
+       i=i+1; %sintassi pignola... i++ no? %eventuale refactor 
     end
     
     %set the popUpMenu options to the all the possible system types
@@ -1933,6 +1936,7 @@ function displaySystem(str)
     
     % getting the dropdown menu object
     popupMenu = findall(groot,'Tag',"popupmenu3");
+    systemInputWindow = findall(groot,'Tag','sys');
     
     %if the DDE system has been selected
     if(strcmp(str,"DDE")) 
@@ -1943,13 +1947,21 @@ function displaySystem(str)
         
         %making the button to show the panel above visible
         showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-        set(showPanelBtn(1),'Visible','on');           
+        set(showPanelBtn(1),'Visible','on'); 
+        
+        %display the proper tooltip for entering the DDEs  
+        set(systemInputWindow(1),'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
         
     else %if ODE has been selected
         %turning off the input panel for the DDE parameters
         DDEPanelOff();
         %making the button to show the panel above NOT visible
         showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
+       
+        %don't display the tooltip for the DDEs, since we are inserting an
+        %ODE system
+        set(systemInputWindow(1),'Tooltip',"");
+        
         set(showPanelBtn(1),'Visible','off');
     end
 

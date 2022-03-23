@@ -117,8 +117,10 @@ classdef GUIWindowManager < handle
         end
         
         function window = createWindow(obj, label)
+            %qui label -> {"main","starter"...} ma la definizione di queste
+            %interfacce?
             window = obj.createFigure();
-            set(window,'CloseRequestFcn', @(src,ev) closeSubwindow(obj, label, src) , 'DeleteFcn' , @(src,ev) deleteWindow(src,ev), 'Name' , obj.getWindowName(label));
+            set(window,'CloseRequestFcn', @(src,ev) closeSubwindow(obj, label, src) , 'DeleteFcn' , @(src,ev) deleteWindow(src,ev), 'Name' , obj.getWindowName(label)+"prova");
             obj.windowhandles.(label) = window;
             obj.installPosition(label);
             obj.notify('windowChanged');
