@@ -1,13 +1,12 @@
 classdef commonFunctions
     methods (Static)
-        function [w,x,D,q]=cheb(N,a,b)
         % Output:
         % x - N+1 Chebyshev nodes on [a,b] (x_0=b, x_N=a),
         % w - weights of the quadrature formula in [a,b],
         % D - differentiation matrix
         % q - row vector of the barycentric weights
         % see Trefethen
-
+        function [w,x,D,q]=cheb(N,a,b)
         if N==0
             x=1;
             D=0;
@@ -45,6 +44,28 @@ classdef commonFunctions
 
         % Barycentric weights
         q=1./prod(dX'+eye(N+1)); %q=1./prod(dX'+eye(N+1)); % row vector of the barycentric weights
+        end
+        
+        % Computes the value of the interpolating polynomial (Nodes,Values) in theta,
+        % using barycentric interpolation with Weights.
+        % (see Berrut, Trefethen, 2004)
+        %%%%%%% ATTENZIONE ALLA DIMENSIONE d1 o d2
+        function PP = interpoly(Theta,Nodes,Values,Weights)
+            
+            n=size(Theta);
+            numer=zeros(n);
+            denom=zeros(n);
+            exact=zeros(n);
+            for j=1:length(Nodes)
+                xdiff=Theta-Nodes(j);
+                temp=Weights(j)./xdiff;
+                numer=numer+temp*Values(j);
+                denom=denom+temp;
+                exact(xdiff==0)=j;
+            end
+            PP=numer./denom;
+            jj=find(exact);
+            PP(jj)=Values(exact(jj));
         end
     end
 end

@@ -19,7 +19,9 @@ classdef GUISelectPointsMenu < handle
             n = length(IP.initiallist);
             for k = 1:n
                 ip = IP.initiallist{k};
+                
                 if isobject(ip)
+                    %crea nuova voce di menu con parent obj.handle
                     uimenu(obj.handle , 'Label' , ip.getName() ,  'Callback', @(o,e) session.changeInitPoint(ip.getLabel()) , varargin{:} , 'Separator' , CLbool2text( k-1>=1 && ~isobject(IP.initiallist{k-1})));
                 end
             end

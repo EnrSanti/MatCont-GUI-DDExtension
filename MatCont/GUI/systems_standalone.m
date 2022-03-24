@@ -470,19 +470,23 @@ while feof(fid_read)==0  %qui
 
                 %qui ci va il parse dell'equazioni
                 if(gds.dim==1) %non uso []
-                    equation=parseDDE(equations(1,:),cor,pa,gds.dim);
+                    equation=parseDDE(equations(1,:),cor,extractBefore(t,strlength(t)),gds.dim);
+                    disp(equation);
                     fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
                 else
                     fprintf(fid_write,'%s',"GM = @(x) [");
                     %competa parser qui
                     for eqNo=1:dim-1
                         eq=equations(eqNo,:);
-                        equation=parseDDE(eq,cor,pa,gds.dim);
+                        equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
+                        disp(equation);
                         fprintf(fid_write,'%s\n',strcat(equation,";"));
                     end
                     eqNo=dim;
                     eq=equations(eqNo,:);
-                    equation=parseDDE(eq,cor,pa,gds.dim);
+                    %gli passo la lista dei tempi, come stringa e , 
+                    equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
+                    disp(equation);
                     fprintf(fid_write,'%s',equation);
                     fprintf(fid_write,'%s\n',"];");
                 end
@@ -704,7 +708,6 @@ gds.parameters = toGdsStruct(original_pa);
 
 
 disp("salva ora");
-disp(file);
 
 save(file,'gds');
 gds.ok = true;
@@ -2179,23 +2182,45 @@ function strRow = RowVett2StrAux(vett)
         strRow=strRow+","+el;
     end
     
-function eq = parseDDE(eqIn,coords,params,dim)
+function eq = parseDDE(eqIn,coords,tempi,dim)
+    %getting the coordinates (x,y...)
     [coords,~]=split(coords,",");
+    [tempi,~]=split(tempi,",");
+    [no_times,~]=size(tempi);
+    %getting the rhs of the current equation considered
     [eq,~]=split(eqIn,"=");
     eq=eq(2);
+    eq=cell2mat(eq);
+    %for each coordinate substitute
     for i=1:dim
         aux=dim;
         aux=aux-i;
-        expression = coords(i)+"\[[^\]]*\]";
-        str="";
-        if(aux==0)
-            str=strcat("VM(end)");
-        else
-            str=strcat("VM(end-",strcat(sprintf("%d",aux),")"));
+        %for each time var
+        for j=1:no_times
+            %estrai da cella
+            times(j)=string(tempi(j));
+            
+            expression = coords(i)+"\["+times(j)+"\W[^\]]*\]";
+            %inizio e fine di ogni espressione che matcha cor_x[t1...]
+            [inizio,fine]=regexp(eq,expression);
+            %inizio=cell2mat(inizio);
+            %fine=cell2mat(fine);
+            str="";
+            [~,matches]=size(inizio); %da 1, le stringhe da 1
+            for l=1:matches
+                %da [tempo-...] a -...
+                replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+                %devo togliere la variabile di tempo iniziale
+                disp(replace);
+                %theta=eval() è da valutare l'eventuale espressione tra []
+                %approx_i=commonFunctions.interpoly(theta (dove valutare il punto),tau_max*UnitNodes,[yM;VM],BaryWeights)
+                %eq=regexprep(eq,expression,replace); %approx_i
+            end
         end
-        eq=regexprep(eq,expression,str);
+        
     end
     %sostit []
+    %for each coordinate (without delay) substitute
     for i=1:dim
         eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",i),")")));
     end
