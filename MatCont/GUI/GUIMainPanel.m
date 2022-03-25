@@ -234,6 +234,7 @@ classdef GUIMainPanel < handle
         
         function syncValues(obj , session)
             %-_-_-_-_-_-_%
+            %setting label to the right class of the system
             set(obj.labelstruct.class, 'String', session.getSystem().getSys_type()); 
             %-_-_-_-_-_-_%
             

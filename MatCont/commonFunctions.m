@@ -1,3 +1,5 @@
+%a class containing static methods used in the fun_eval functions of the
+%systems and in the system_standalone.m to create the fun_eval
 classdef commonFunctions
     methods (Static)
         % Output:

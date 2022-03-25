@@ -1674,7 +1674,7 @@ function init
 global gds;
     gds = [];
     %-_-_-_-_-_-_%
-    %added fields
+    %added field
     gds.sys_type=''; 
     gds.no_discretizationPoints = 0;
     gds.no_delays=0; 
