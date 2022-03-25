@@ -16,5 +16,5 @@ TODO:
 - check wether in systems file use min/max
 - eventual bug fixes
 - code refactoring (i.e. the code is messy)
-- continue code documentation
+-~~continue code documentation~~
 - find the definition of the "starter" window and add a label to divide the delay from the other parameters
