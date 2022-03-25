@@ -462,9 +462,16 @@ while feof(fid_read)==0  %qui
                 fprintf(fid_write,'%s\n',"d1=0;"); 
                 fprintf(fid_write,'%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")));
                 %da modificare se uso un vettore poi per passare i ritardi
-                maxT=strsplit(pa,",");
-                maxT=maxT(end);
-                fprintf(fid_write,'%s\n',strcat("tau_max=",strcat(maxT,";"))); 
+                %idea _> creare array contente le diverse funzioni di ritardo, valutarle e trovare il max 
+                %non mi servono i parametri ma, le funzioni di ritardo..
+                %e.g. [t-2*TAU].. il massimo sarà 2TAU
+                vettRitardi=getDelayFunctions(equations(1,:),cor,extractBefore(t,strlength(t)),gds.dim);
+                %il vettore è però da trasformare in str
+                vettRitardi=RowVett2Str(vettRitardi);
+                fprintf(fid_write,'%s\n',strcat("delayFunctions=",vettRitardi)); 
+                %o il massimo? vedi qui
+                maxT="min(delayFunctions);"
+                fprintf(fid_write,'%s\n',strcat("tau_max=",maxT)); 
                 fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
                 fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
 
@@ -672,6 +679,7 @@ fprintf(fid_write,'%s\n',strcat('out="',strcat(gds.sys_type,'";')));
 if(strcmp(gds.sys_type,"DDE"))
     %calcola
     [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
+
     fprintf(fid_write,'\n%s\n','function out = UnitQuadweightsFun');
     fprintf(fid_write,'%s',strcat('out=',RowVett2Str(UnitQuadweights)));
     %ok scritta la funzione UnitQuadweights
@@ -683,9 +691,9 @@ if(strcmp(gds.sys_type,"DDE"))
     mat="[";
     [rows , ~]=size(UnitDD);
     for i=1:(rows-1)
-        mat=mat+RowVett2StrAux(UnitDD(i,:))+";"
+        mat=mat+RowVett2StrAux(UnitDD(i,:))+";";
     end
-    mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];"
+    mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];";
     fprintf(fid_write,'\n%s\n','function out = UnitDDFun');
     fprintf(fid_write,'%s',strcat('out=',mat));
     
@@ -2162,69 +2170,166 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 %-_-_-_-_-_-_%
-%qui
-    
+
+%function that given a row vector, returns the string that identifies it
+%with a ";" at the end
+%e.g. [1,2,3] -> "[1,2,3];"
+%vett: a row vector
 function strRow = RowVett2Str(vett)
-    strRow="["+RowVett2StrAux(vett)+"];"    
- 
+    strRow="["+RowVett2StrAux(vett)+"];";   
+
+%function that given a column vector returns a string identifying the
+%vector with a ";" at the end (e.g. [1;2;3] -> "[1;2;3]";)
+%vett: a column vector
 function strCol = ColVett2Str(vett)
-    [rows, ~]=size(vett)
+    %getting the size of the vector
+    [rows, ~]=size(vett);
+    %starting the string
     strCol="["+vett(1,:);
+    %for each element, concatenate it with ";"
     for i=2:(rows)
         strCol=strCol+";"+vett(i,:);
     end
+    %add at the end ];"
     strCol=strCol+"];";
-
+    
+%function that given a row vector, returns the string of all its elements
+%divided by ","
+%e.g. [1,2,3] -> "1,2,3"
+%vett: a row vector
 function strRow = RowVett2StrAux(vett)
+    %getting the 1st element
     strRow=vett(1);
+    
     vett=vett(2:end);
+    %for every element (not the first, concatenate it with a "," to the
+    %string"
     for el=vett
         strRow=strRow+","+el;
     end
     
+%function that given a diff equation, the coordinates, times and the
+%dimension of the systems (i.e. how many total coordinates we have) returns
+%the string identifying the rhs of the original equation ready to be
+%insered in the systems file (according to Francesca's notation)
+%eqIn: a string containing the differential equation according to the
+%matcont format (typed in by the user)
+%coords: a string containing the coordinates of the system, divided by ","
+%(e.g "x,y,z")
+%tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+%dim: integer, the number of coordinates in the system
 function eq = parseDDE(eqIn,coords,tempi,dim)
     %getting the coordinates (x,y...)
     [coords,~]=split(coords,",");
+    %getting the times
     [tempi,~]=split(tempi,",");
+    
+    %getting how many time variables we have
     [no_times,~]=size(tempi);
+    
     %getting the rhs of the current equation considered
     [eq,~]=split(eqIn,"=");
     eq=eq(2);
+    
+    %getting the string itself
     eq=cell2mat(eq);
+    
     %for each coordinate substitute
     for i=1:dim
         aux=dim;
         aux=aux-i;
         %for each time var
         for j=1:no_times
-            %estrai da cella
+            
+            %if we have multiple time variables, extract one at the time
             times(j)=string(tempi(j));
             
+            %the regular expression of cor_xyz[t(i)...]
             expression = coords(i)+"\["+times(j)+"\W[^\]]*\]";
-            %inizio e fine di ogni espressione che matcha cor_x[t1...]
+            
+            
+            %getting the arrays of the beginning and ending positions of each match found with the reg exp 
             [inizio,fine]=regexp(eq,expression);
-            %inizio=cell2mat(inizio);
-            %fine=cell2mat(fine);
-            str="";
-            [~,matches]=size(inizio); %da 1, le stringhe da 1
+            
+            %getting the value of how many matches we have found with the reg exp 
+            [~,matches]=size(inizio); %strings begin from 1...
+            
+            %foreach match substitute the expression:
             for l=1:matches
-                %da [tempo-...] a -...
+                %we extract the delay from the string we have found
+                %(e.g. [t-g(x)] -> g(x))
                 replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
-                %devo togliere la variabile di tempo iniziale
-                disp(replace);
-                %theta=eval() è da valutare l'eventuale espressione tra []
-                %approx_i=commonFunctions.interpoly(theta (dove valutare il punto),tau_max*UnitNodes,[yM;VM],BaryWeights)
-                %eq=regexprep(eq,expression,replace); %approx_i
+
+                %it's not needed to eval(replace) to actually evaluate the
+                %expression
+                approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM;VM],BaryWeights)";
+               
+                %in the rhs we substitute the coordinate with a delay with
+                %the function that will compute its value (e.g y[t-2*TAU]
+                %-> interpoly(-2*TAU,...))
+                eq=regexprep(eq,expression,approx); 
             end
         end
         
     end
-    %sostit []
-    %for each coordinate (without delay) substitute
+    %now each coordinate with a delay has been substitued by the
+    %approximating value (that has to be computed)
+    
+    %for each coordinate (without delay) substitute yM(i)
     for i=1:dim
         eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",i),")")));
     end
     %var con yM(i) sostituite
     
+function delayFunctionsns = getDelayFunctions(eqIn,coords,tempi,dim)
+
+        delayFunctionsns="";
+        %getting the coordinates (x,y...)
+        [coords,~]=split(coords,",");
+        %getting the times
+        [tempi,~]=split(tempi,",");
+
+        %getting how many time variables we have
+        [no_times,~]=size(tempi);
+
+        %getting the rhs of the current equation considered
+        [eq,~]=split(eqIn,"=");
+        eq=eq(2);
+
+        %getting the string itself
+        eq=cell2mat(eq);
+
+        %for each coordinate substitute
+        for i=1:dim
+            %for each time var
+            for j=1:no_times
+
+                %if we have multiple time variables, extract one at the time
+                times(j)=string(tempi(j));
+
+                %the regular expression of cor_xyz[t(i)...]
+                expression = coords(i)+"\["+times(j)+"\W[^\]]*\]";
+
+
+                %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+                [inizio,fine]=regexp(eq,expression);
+
+                %getting the value of how many matches we have found with the reg exp 
+                [~,matches]=size(inizio); %strings begin from 1...
+
+                %foreach match substitute the expression:
+                for l=1:matches
+                    %we extract the delay from the string we have found
+                    %(e.g. [t-g(x)] -> g(x))
+                    replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+                    replace=replace{1};
+                    delayFunctionsns(end+1)=replace;
+
+                end
+            end
+
+        end
+        delayFunctionsns=delayFunctionsns(2:end);
     
 %-_-_-_-_-_-_%

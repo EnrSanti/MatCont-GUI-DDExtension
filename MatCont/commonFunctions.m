@@ -67,5 +67,8 @@ classdef commonFunctions
             jj=find(exact);
             PP(jj)=Values(exact(jj));
         end
+        
+        
+ 
     end
 end
