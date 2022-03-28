@@ -1,4 +1,4 @@
-function out = provaEliminaLogistica
+function out = logisticDDE_NM
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -45,9 +45,6 @@ function tens3  = der3(t,kmrgd,par_r,par_TAU)
 function tens4  = der4(t,kmrgd,par_r,par_TAU)
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_r,par_TAU)
-
-function out = Systype
-out="DDE";
 
 function out = UnitQuadweightsFun
 out=[0.0050505,0.04729,0.092818,0.12679,0.14961,0.15688,0.14961,0.12679,0.092818,0.04729,0.0050505];

@@ -480,7 +480,7 @@ while feof(fid_read)==0  %qui
                 %max_tau moltiploco i nodi di cheb.
                 
                 %writing in the file
-                maxT="abs(min(delayFunctions));"
+                maxT="abs(min(delayFunctions));" % equivalente a max(abs())
                 fprintf(fid_write,'%s\n',strcat("tau_max=",maxT)); 
                 fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
                 fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 

@@ -1,4 +1,4 @@
-function out = provaLogisticaNuovoMetodo
+function out = MackeyGlass_NM
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -10,7 +10,7 @@ out{8} = [];
 out{9} = [];
 
 % --------------------------------------------------------------------------
-function dydt = fun_eval (t,state,par_r,par_TAU)
+function dydt = fun_eval (t,state,par_beta,par_gamma,par_n,par_TAU)
 M=10;
 UnitQuadweights=UnitQuadweightsFun();
 UnitNodes=UnitNodesFun();
@@ -18,11 +18,11 @@ UnitDD=UnitDDFun();
 BaryWeights=BaryWeightsFun();
 d1=0;
 d2=1;
-delayFunctions=[-par_TAU];
+delayFunctions=[-par_TAU,-par_TAU];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
 VM=state((d1*M+d2+1):end);
-GM = @(x)par_r*yM(1)*(1-commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM;VM],BaryWeights));
+GM = @(x)par_beta*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM;VM],BaryWeights)/(1+commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM;VM],BaryWeights)^par_n)-par_gamma*yM(1);
 KM=[]; 
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
@@ -32,19 +32,19 @@ function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 
 % --------------------------------------------------------------------------
-function jac = jacobian(t,kmrgd,par_r,par_TAU)
+function jac = jacobian(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 % --------------------------------------------------------------------------
-function jacp = jacobianp(t,kmrgd,par_r,par_TAU)
+function jacp = jacobianp(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 % --------------------------------------------------------------------------
-function hess = hessians(t,kmrgd,par_r,par_TAU)
+function hess = hessians(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 % --------------------------------------------------------------------------
-function hessp = hessiansp(t,kmrgd,par_r,par_TAU)
+function hessp = hessiansp(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 %---------------------------------------------------------------------------
-function tens3  = der3(t,kmrgd,par_r,par_TAU)
+function tens3  = der3(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 %---------------------------------------------------------------------------
-function tens4  = der4(t,kmrgd,par_r,par_TAU)
+function tens4  = der4(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 %---------------------------------------------------------------------------
-function tens5  = der5(t,kmrgd,par_r,par_TAU)
+function tens5  = der5(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
 
 function out = UnitQuadweightsFun
 out=[0.0050505,0.04729,0.092818,0.12679,0.14961,0.15688,0.14961,0.12679,0.092818,0.04729,0.0050505];
