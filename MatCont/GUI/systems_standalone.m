@@ -915,8 +915,10 @@ if (val==1)
   delete(editp);  delete(statp);
 end
 set(0,'ShowHiddenHandles','off');
-pos=[0.0335 0.09 0.925 0.47];
+%qui modificati i valori delle dimensioni
+pos=[0.034 0.09 0.925 0.419];
 set(handles.sys,'Position',pos);
+
 set(hf,'Value',0);set(hr,'Value',0);
 % --------------------------------------------------------------------
 function varargout = routine_Callback(h, eventdata, handles, varargin)
@@ -966,7 +968,7 @@ set(0,'ShowHiddenHandles','on');
 hf=findobj('Tag',strcat('f',num2str(num)));
 hn=findobj('Tag',strcat('n',num2str(num)));
 hn=findobj('Tag',strcat('n',num2str(num)));
-edit=findobj('Tag','edit');stat=findobjValue('Tag','stat');
+edit=findobj('Tag','edit');stat=findobj('Tag','stat');
 editp=findobj('Tag','editp');statp=findobj('Tag','statp');
 delete(edit);delete(stat);
 delete(editp);delete(statp);
@@ -974,7 +976,8 @@ set(0,'ShowHiddenHandles','off');
 gds.der(3,num)=1;gds.der(1,num)=0;
 gds.der(2,num)=0;gds.der(4,num)=0;
 set(hf,'Value',0);set(hn,'Value',0);
-pos=[0.0335 0.34 0.925 0.23];
+%qui modificati i valori delle dimensioni
+pos=[0.0335 0.34 0.925 0.185];
 set(handles.sys,'Position',pos);
 color=get(0,'defaultUicontrolBackgroundColor');
 switch num
@@ -1141,7 +1144,9 @@ if (~isempty(val) && (val==1))
     delete(edit);delete(stat);delete(editp);delete(statp);
 end
 set(0,'ShowHiddenHandles','off');
-pos=[0.0335 0.09 0.925 0.47];
+
+%qui modificati i valori delle dimensioni
+pos=[0.034 0.09 0.925 0.419];
 set(hsys,'Position',pos);
 gds.der(4,num)=1;gds.der(1,num)=0;
 gds.der(2,num)=0;gds.der(3,num)=0;
