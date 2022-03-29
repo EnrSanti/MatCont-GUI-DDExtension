@@ -34,6 +34,3 @@ function tens3  = der3(t,kmrgd,par_r)
 function tens4  = der4(t,kmrgd,par_r)
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_r)
-
-function out = Systype
-out="ODE";

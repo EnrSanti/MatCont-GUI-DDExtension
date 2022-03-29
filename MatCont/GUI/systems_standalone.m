@@ -15,7 +15,7 @@ if nargin == 0 ||((nargin ==1)&&(strcmp(varargin{1},'new'))) % LAUNCH GUI
     h=gcbo;
     arg=get(h,'Tag');
     fig = openfig(mfilename,'reuse', 'invisible');
- % Use system color scheme for figure:
+  % Use system color scheme for figure:
 set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
 
    if strcmp(arg,'systems_standalone')||((nargin ==1)&&strcmp(varargin{1},'new'))
@@ -112,7 +112,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
         %setting the number of discretization points of the system
         set(handles.noDiscPoints,'String',sprintf('%d',gds.no_discretizationPoints));
         %setting the help tooltip
-        set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
+        set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
         
         %setting the delay parameters
         [r,~]=size(gds.parameters);
@@ -120,7 +120,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
         set(handles.delayPar,'String',strjoin(gds.parameters(pos:end,1),","));
     else
         %if the system is an ODE system, no tooltips for DDE are shown
-        set(handles.sys,'Tooltip','');
+        set(handles.sys,'Tooltip',"");
     end
     %-_-_-_-_-_-_%
     
@@ -1975,9 +1975,12 @@ function displaySystem(str)
         showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
         set(showPanelBtn(1),'Visible','on'); 
         
-        %display the proper tooltip for entering the DDEs  
-        set(systemInputWindow(1),'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
+          %display the proper tooltip for entering the DDEs  
         
+        set(systemInputWindow(1),'ToolTipString',"Please insert DDEs with the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
+        
+        %set(systemInputWindow(1),'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
+   
     else %if ODE has been selected
         %turning off the input panel for the DDE parameters
         DDEPanelOff();
@@ -1986,7 +1989,8 @@ function displaySystem(str)
        
         %don't display the tooltip for the DDEs, since we are inserting an
         %ODE system
-        set(systemInputWindow(1),'Tooltip',"");
+        set(systemInputWindow(1),'ToolTipString','');
+        %set(systemInputWindow(1),'Tooltip',"");
         
         set(showPanelBtn(1),'Visible','off');
     end
