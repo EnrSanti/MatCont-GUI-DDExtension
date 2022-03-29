@@ -5,7 +5,7 @@ CURRENT VERSION:
 
 The current version of the project SHOULD allow the user to insert systems of DDEs and analyse their different aspects (i.e. do all the operations previously doable on ODE systems).
 
-Currently ONLY ONE DELAY PARAMETER IS ACCEPTED.
+Currently mutliple DELAY PARAMETERs should be ACCEPTED.
 Please when inserting the a DDE use square brackets [] to insert the delay (e.g. y'=parameter\*y\*y[t-TAU]).
 
 TODO:
