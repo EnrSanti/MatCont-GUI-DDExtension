@@ -2029,8 +2029,8 @@ end
 
 
 
-% function called when the OK button on the DDE panel is pressed (it
-% turns it off)
+% function called when the OK button on the DDE panel is pressed,
+% turns the panel off unless the value insered as no. of discretization points is not an integer > 0.
 
 % parameters: 
 % hObject    handle to okParameters (see GCBO)
@@ -2038,8 +2038,19 @@ end
 % handles    structure with handles and user data (see GUIDATA)
 
 function okParameters_Callback(hObject, eventdata, handles)
-    DDEPanelOff();
+    discPointsEntry = findall(groot,'Tag',"noDiscPoints");
 
+    val=str2double(get(discPointsEntry(1),"String"));    
+    if(isnan(val))
+        errordlg("The number of discretization points must be an integer value","ERROR");
+        return;
+    end
+    
+    if(val<=0)
+        errordlg("The number of discretization points must be a positive integer value","ERROR");
+    else
+        DDEPanelOff();
+    end
 
 % function called when the OK button on the DDE panel is pressed (it
 % turns it off)
