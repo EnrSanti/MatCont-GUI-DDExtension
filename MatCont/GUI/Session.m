@@ -224,10 +224,7 @@ classdef Session < handle
                             path = obj.solutionhandle.getDefaultName(obj);
                         end
                         
-                        %da qui, ni
-                        
                    
-                        
                         %ma rimuove colonne...
                         
                         %write solution to file

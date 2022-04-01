@@ -416,7 +416,7 @@ while feof(fid_read)==0  %qui
     matches=strrep(matches,'odefile',gds.system);
     matches=strrep(matches,',parameters',par);
     %scrive sul file del sistema:
-    %qui
+    %-_-_-_-_-_-_%
     if(~(gds.sys_type=="DDE" && (contains(matches,"function [")||contains(matches,"handles = feval") || contains(matches,"y0=[")|| contains(matches,"options = odeset")|| contains(matches,"tspan = ["))))
         %da eliminare
         if((scriptFrancescaCompatible && contains(matches,"function dydt")))
@@ -430,9 +430,8 @@ while feof(fid_read)==0  %qui
             end
         end
     end
+    %-_-_-_-_-_-_%    
         
-        
-    %qui
     filecontent = [filecontent,  sprintf('%s\n',matches)]; 
     if isfield(gds,'userfunction')
         if ~isempty(findstr(matches,'varargout{1}=der5(coordinates,'))          
@@ -540,7 +539,7 @@ while feof(fid_read)==0  %qui
                 fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
                 fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
 
-                %qui ci va il parse dell'equazioni
+                
                 if(gds.dim==1) %non uso []
                     equation=parseDDE(equations(1,:),cor,pa,gds.dim);
                     fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
@@ -568,6 +567,7 @@ while feof(fid_read)==0  %qui
             
             end %fine delle cose da rimuovere
             %-_-_-_-_-_-_%
+            
         else %if the system is an ODE one, write every equation
             for i=1:dim
                   %scrive sul file del sistema:
@@ -915,8 +915,11 @@ if (val==1)
   delete(editp);  delete(statp);
 end
 set(0,'ShowHiddenHandles','off');
-%qui modificati i valori delle dimensioni
+%-_-_-_-_-_-_%
+%the dimension and position of the "sys" input panel (i.e. where you type
+%the system equations
 pos=[0.034 0.09 0.925 0.419];
+%-_-_-_-_-_-_%
 set(handles.sys,'Position',pos);
 
 set(hf,'Value',0);set(hr,'Value',0);
@@ -976,8 +979,11 @@ set(0,'ShowHiddenHandles','off');
 gds.der(3,num)=1;gds.der(1,num)=0;
 gds.der(2,num)=0;gds.der(4,num)=0;
 set(hf,'Value',0);set(hn,'Value',0);
-%qui modificati i valori delle dimensioni
+%-_-_-_-_-_-_%
+%the dimension and position of the "sys" input panel (i.e. where you type
+%the system equations
 pos=[0.0335 0.34 0.925 0.185];
+%-_-_-_-_-_-_%
 set(handles.sys,'Position',pos);
 color=get(0,'defaultUicontrolBackgroundColor');
 switch num
@@ -2281,8 +2287,10 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
                 replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
 
                 %it's not needed to eval(replace) to actually evaluate the
-                %expression
-                approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+i+");VM("+i+":2:end)],BaryWeights)";
+                %expression, anyway, creating the string to substitute to
+                %x[t-...] which corresponds to the call to the
+                %interpolation function
+                approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+i+");VM("+i+":d2:end)],BaryWeights)";
                
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]

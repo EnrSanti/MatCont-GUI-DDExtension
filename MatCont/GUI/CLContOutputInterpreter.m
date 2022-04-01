@@ -100,8 +100,21 @@ classdef CLContOutputInterpreter
                 for index = 1:length(coordinates)
                     coordinate = coordinates{index};
                     plotsel.declareSubCategory('coordinates', coordinate);
+                    %-_-_-_-_-_-_%
+                    % if the system is a DDE system, then the limit cycle
+                    % output file will result having rows for each equation
+                    % in the discretized system, so, the rows to be
+                    % considered are d2*M (no. of DDE euqaiton*no of
+                    % discretizing points) aprat
+                    if(session.settings.fields.system.sys_type=="DDE")
+                        m=session.settings.fields.system.no_discretizationPoints;
+                        selection = (0:ntst*ncol)*(dim*(m+1))+ index;
+                    else %every other case done as usual
+                        selection = (0:ntst*ncol)*dim + index;
+                    end
+                    %check if ode (old) does have sys_type
+                    %-_-_-_-_-_-_%
                     
-                    selection = (0:ntst*ncol)*dim + index;
                     plotsel.declareItem('coordinates', coordinate, 'Default', coordinate, @(x, h, f, s, ind, i) x(selection, ind), true);
                     plotsel.declareItem('coordinates', coordinate, 'Min', sprintf('min(%s)', coordinate), @(x, h, f, s, ind, i) min(x(selection, ind)));
                     plotsel.declareItem('coordinates', coordinate, 'Max', sprintf('max(%s)', coordinate), @(x, h, f, s, ind, i) max(x(selection, ind)));
@@ -114,22 +127,20 @@ classdef CLContOutputInterpreter
             
           omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
            
-           %punto modifica
-          %if(isfield(session.settings.fields.system,'sys_type'))
-          try
-          %qui modifica if DDE -_-_
-               if(session.settings.fields.system.sys_type=="DDE")
-                    index = dim*(ntst*ncol+1)*(session.settings.fields.system.no_discretizationPoints+1) + 1;
-                    disp("dde no eccezione");
-               else
-                   index = dim*(ntst*ncol+1) + 1;
-                   disp("ode no eccezione");
-               end
-          catch Exception
-                disp("edo eccezione");
-                index = dim*(ntst*ncol+1) + 1;
+          %-_-_-_-_-_-_%
+          %if the system contains DDEs, then the index on which we find the
+          %parameters doesn't start at  dim*(ntst*ncol+1) + 1, but the
+          %number of equations discretizing the system has to be taken into
+          %account
+          if(session.settings.fields.system.sys_type=="DDE")
+                index = dim*(ntst*ncol+1)*(session.settings.fields.system.no_discretizationPoints+1) + 1;
+                disp("debug:dde no eccezione");
+           else
+               index = dim*(ntst*ncol+1) + 1;
+               disp("debug: ode no eccezione");
           end
-            
+          
+          %-_-_-_-_-_-_%
             
             
             

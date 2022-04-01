@@ -6,15 +6,20 @@ classdef CLSettingCoordinates < CLSetting
     
     methods
         function obj = CLSettingCoordinates(settings, coordinates)
+            
             global session;
             dim = length(coordinates);
+            %-_-_-_-_-_-_%
+            %try if the system is dde one, if so, then set the dimension to
+            %the actual dimension of the discretizing system
             try
                if(session.settings.fields.system.sys_type=="DDE")
-                    dim = dim;%*(session.settings.fields.system.no_discretizationPoints+1);
+                    dim = dim*(session.settings.fields.system.no_discretizationPoints+1);  
                end
             catch exception
                 dim=dim;
             end
+            %-_-_-_-_-_-_%
             obj = obj@CLSetting('coord', zeros(1, dim), InputRestrictions.vector(dim), 2, 1, length(coordinates) + 1, '~~~');
             obj.coordinates = coordinates;      
             
