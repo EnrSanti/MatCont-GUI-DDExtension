@@ -126,10 +126,7 @@ classdef CLContOutputInterpreter
             
           if(session.settings.fields.system.sys_type=="DDE")
                rep=ntst*ncol;
-               m=session.settings.fields.system.no_discretizationPoints;
-               for index2=1:(rep)
-                  omap.x(index2*(m+1)*dim+(1:dim)) = coordinates;
-               end
+               for index2=1:(nts
           else
                omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
           end
