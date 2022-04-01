@@ -2029,8 +2029,8 @@ end
 
 
 
-% function called when the OK button on the DDE panel is pressed,
-% turns the panel off unless the value insered as no. of discretization points is not an integer > 0.
+% function called when the OK button on the DDE panel is pressed (it
+% turns it off)
 
 % parameters: 
 % hObject    handle to okParameters (see GCBO)
@@ -2038,19 +2038,8 @@ end
 % handles    structure with handles and user data (see GUIDATA)
 
 function okParameters_Callback(hObject, eventdata, handles)
-    discPointsEntry = findall(groot,'Tag',"noDiscPoints");
+    DDEPanelOff();
 
-    val=str2double(get(discPointsEntry(1),"String"));    
-    if(isnan(val))
-        errordlg("The number of discretization points must be an integer value","ERROR");
-        return;
-    end
-    
-    if(val<=0)
-        errordlg("The number of discretization points must be a positive integer value","ERROR");
-    else
-        DDEPanelOff();
-    end
 
 % function called when the OK button on the DDE panel is pressed (it
 % turns it off)
@@ -2293,7 +2282,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
 
                 %it's not needed to eval(replace) to actually evaluate the
                 %expression
-                approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM;VM],BaryWeights)";
+                approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+i+");VM("+i+":2:end)],BaryWeights)";
                
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]

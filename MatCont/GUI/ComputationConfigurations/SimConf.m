@@ -131,7 +131,7 @@ classdef SimConf < CompConf
             handles = system.handle();
             
             %%
-              %qui -_-_-
+            %qui -_-_-
             if(system.sys_type=="DDE")
                 %obj.settings.fields.system.no_discretizationPoints
                 %parameter
@@ -141,11 +141,11 @@ classdef SimConf < CompConf
                 coords=listaCoord;
                 repetitions=system.no_discretizationPoints;
                 for i=1:repetitions
-                    coords=[coords; listaCoord];
+                    coords=[coords; listaCoord]; %poi da modificare con ,
                 end
                 settings.fields.coord.value=coords;
             end
-                %
+            %
             x0 = settings.coord;
             x0 = x0(:); %make column vector
             param = num2cell(settings.parameters);

@@ -6,7 +6,15 @@ classdef CLSettingCoordinates < CLSetting
     
     methods
         function obj = CLSettingCoordinates(settings, coordinates)
+            global session;
             dim = length(coordinates);
+            try
+               if(session.settings.fields.system.sys_type=="DDE")
+                    dim = dim;%*(session.settings.fields.system.no_discretizationPoints+1);
+               end
+            catch exception
+                dim=dim;
+            end
             obj = obj@CLSetting('coord', zeros(1, dim), InputRestrictions.vector(dim), 2, 1, length(coordinates) + 1, '~~~');
             obj.coordinates = coordinates;      
             

@@ -76,7 +76,8 @@ classdef CLContOutputInterpreter
         end
         
         function [index, omap] = doCycle(obj, coordinates, ntst, ncol, dim, omap, numconfig, plotsel)
-            
+       
+            global session;
             for i = 1:length(coordinates)
                 omap.x{i} =  coordinates{i};  %['coordinate ' coordinates{i}];
             end
@@ -111,8 +112,26 @@ classdef CLContOutputInterpreter
             end
             
             
-            omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
-            index = dim*(ntst*ncol+1) + 1;
+          omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
+           
+           %punto modifica
+          %if(isfield(session.settings.fields.system,'sys_type'))
+          try
+          %qui modifica if DDE -_-_
+               if(session.settings.fields.system.sys_type=="DDE")
+                    index = dim*(ntst*ncol+1)*(session.settings.fields.system.no_discretizationPoints+1) + 1;
+                    disp("dde no eccezione");
+               else
+                   index = dim*(ntst*ncol+1) + 1;
+                   disp("ode no eccezione");
+               end
+          catch Exception
+                disp("edo eccezione");
+                index = dim*(ntst*ncol+1) + 1;
+          end
+            
+            
+            
             
             
         end
