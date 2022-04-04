@@ -100,7 +100,12 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     %window to edit the system, locking the possibility of changing the
     %type of the system itself (if the sys_type is not '' then it was not
     %pressed new but edit)
-    sys_type=gds.sys_type;
+    if(isfield(gds,"sys_type")) %"" nel caso di new, ma c'è, oppure nel caso edit sistema ODDE/DDE
+        sys_type=gds.sys_type;
+    else
+        %ho premuto su edit sistema (ode) vecchio, senza sys_type
+        sys_type="ODE";
+    end
     if(~strcmp(sys_type, ''))
         displaySystem(sys_type); %fa tutti icasi
         DDEPanelOff();
