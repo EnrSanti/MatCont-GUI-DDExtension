@@ -100,12 +100,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     %window to edit the system, locking the possibility of changing the
     %type of the system itself (if the sys_type is not '' then it was not
     %pressed new but edit)
-    if(isfield(gds,"sys_type")) %"" nel caso di new, ma c'è, oppure nel caso edit sistema ODDE/DDE
-        sys_type=gds.sys_type;
-    else
-        %ho premuto su edit sistema (ode) vecchio, senza sys_type
-        sys_type="ODE";
-    end
+    sys_type=gds.sys_type;
     if(~strcmp(sys_type, ''))
         displaySystem(sys_type); %fa tutti icasi
         DDEPanelOff();
@@ -156,7 +151,6 @@ function ok_Callback(h, eventdata, handles, varargin)
 % Stub for Callback of the uicontrol handles.ok.
 
 disp("scrivo sistema");
-scriptFrancescaCompatible=0;
 
 %variabili condivise "globali"
 global gds hds path_sys MC;
@@ -423,17 +417,13 @@ while feof(fid_read)==0  %qui
     %scrive sul file del sistema:
     %-_-_-_-_-_-_%
     if(~(gds.sys_type=="DDE" && (contains(matches,"function [")||contains(matches,"handles = feval") || contains(matches,"y0=[")|| contains(matches,"options = odeset")|| contains(matches,"tspan = ["))))
-        %da eliminare
-        if((scriptFrancescaCompatible && contains(matches,"function dydt")))
-            fprintf(fid_write,'%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,",aux,tau,M)")));  
+        
+        if(contains(matches,"function dydt") && gds.sys_type=="DDE")
+           fprintf(fid_write,'%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));
         else
-            if(contains(matches,"function dydt") && gds.sys_type=="DDE")
-               fprintf(fid_write,'%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));
-            else
-                %fine da eliminare
-                fprintf(fid_write,'%s\n',matches);  
-            end
+            fprintf(fid_write,'%s\n',matches);  
         end
+
     end
     %-_-_-_-_-_-_%    
         
@@ -453,7 +443,6 @@ while feof(fid_read)==0  %qui
         %if the system is a DDE one
         if(gds.sys_type=="DDE")
             
-            if(scriptFrancescaCompatible==0)
             %-_-_-_-_-_-_%
                 %write in the m file the number of discretization points
                 fprintf(fid_write,'%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
@@ -484,7 +473,7 @@ while feof(fid_read)==0  %qui
                 %max_tau moltiploco i nodi di cheb.
                 
                 %writing in the file
-                maxT="abs(min(delayFunctions));" % equivalente a max(abs())
+                maxT="abs(min(delayFunctions));"; % equivalente a max(abs())
                 fprintf(fid_write,'%s\n',strcat("tau_max=",maxT)); 
                 fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
                 fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
@@ -521,56 +510,7 @@ while feof(fid_read)==0  %qui
                 fprintf(fid_write,'%s\n',"KM=[]; "); 
                 fprintf(fid_write,'%s\n',"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));"); 
                 fprintf(fid_write,'%s\n',"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];"); 
-
-                   
-            
     
-            %-_-_-_-_-_-_%
-            else %da rimuovere
-                %-_-_-_-_-_-_%
-
-                fprintf(fid_write,'%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
-                
-                %%
-
-
-                fprintf(fid_write,'%s\n',"UnitQuadweights=UnitQuadweights();"); 
-                fprintf(fid_write,'%s\n',"UnitNodes=UnitNodes();"); 
-                fprintf(fid_write,'%s\n',"UnitDD=UnitDD();"); 
-                fprintf(fid_write,'%s\n',"BaryWeights=BaryWeights();"); 
-                fprintf(fid_write,'%s\n',"d1=0;"); 
-                fprintf(fid_write,'%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")));
-                fprintf(fid_write,'%s\n',"tau_max=tau;"); 
-                fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
-                fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
-
-                
-                if(gds.dim==1) %non uso []
-                    equation=parseDDE(equations(1,:),cor,pa,gds.dim);
-                    fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
-                else
-                    fprintf(fid_write,'%s',"GM = @(x) [");
-                    %competa parser qui
-                    for eqNo=1:dim-1
-                        eq=equations(eqNo,:);
-                        equation=parseDDE(eq,cor,pa,gds.dim);
-                        fprintf(fid_write,'%s\n',strcat(equation,";"));
-                    end
-                    eqNo=dim;
-                    eq=equations(eqNo,:);
-                    equation=parseDDE(eq,cor,pa,gds.dim);
-                    fprintf(fid_write,'%s',equation);
-                    fprintf(fid_write,'%s\n',"];");
-                end
-
-
-                fprintf(fid_write,'%s\n',"KM=[]; "); 
-                fprintf(fid_write,'%s\n',"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));"); 
-                fprintf(fid_write,'%s\n',"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];"); 
-
-
-            
-            end %fine delle cose da rimuovere
             %-_-_-_-_-_-_%
             
         else %if the system is an ODE one, write every equation
