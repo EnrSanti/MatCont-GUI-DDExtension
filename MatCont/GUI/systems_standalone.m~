@@ -396,7 +396,10 @@ else siz=0;end
 
 
 
-
+if(type=="DDE")
+   vettoreRitardi=getDelayFunctions(equations(1:gds.dim,:),cor,extractBefore(t,strlength(t)),gds.dim);
+   userfun_standalone('Delay0',vettoreRitardi,"D0");
+end
 
 h=0;
 filecontent = '';
@@ -407,7 +410,7 @@ while feof(fid_read)==0  %qui
         for i=1:9+siz
             %scrive sul file del sistema:
             fprintf(fid_write,'%s\n',string_handles{i,1});
-            %filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
+            filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
         end
     end        
     
@@ -419,17 +422,15 @@ while feof(fid_read)==0  %qui
     if(~(gds.sys_type=="DDE" && (contains(matches,"function [")||contains(matches,"handles = feval") || contains(matches,"y0=[")|| contains(matches,"options = odeset")|| contains(matches,"tspan = ["))))
         
         if(contains(matches,"function dydt") && gds.sys_type=="DDE")
-           fprintf(fid_write,'\n\n%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));        
-           filecontent = [filecontent,  sprintf('\n\n%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")))];
+           fprintf(fid_write,'%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));
         else
-            fprintf(fid_write,'%s\n',matches);   
-            filecontent = [filecontent,  sprintf('%s\n',matches)];
+            fprintf(fid_write,'%s\n',matches);  
         end
 
     end
     %-_-_-_-_-_-_%    
         
-    %filecontent = [filecontent,  sprintf('%s\n',matches)]; 
+    filecontent = [filecontent,  sprintf('%s\n',matches)]; 
     if isfield(gds,'userfunction')
         if ~isempty(findstr(matches,'varargout{1}=der5(coordinates,'))          
             for i = 1:size(gds.userfunction,2)
@@ -448,7 +449,6 @@ while feof(fid_read)==0  %qui
             %-_-_-_-_-_-_%
                 %write in the m file the number of discretization points
                 fprintf(fid_write,'%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
-                filecontent = [filecontent,  sprintf('%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")))];
                
                 %write in the file all the variables needed in the fun_eval
                 %method
@@ -458,14 +458,8 @@ while feof(fid_read)==0  %qui
                 fprintf(fid_write,'%s\n',"BaryWeights=BaryWeightsFun();"); 
                 fprintf(fid_write,'%s\n',"d1=0;"); 
                 fprintf(fid_write,'%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")));
-               
-                filecontent = [filecontent,  sprintf('%s\n',"UnitQuadweights=UnitQuadweightsFun();")];
-                filecontent = [filecontent,  sprintf('%s\n',"UnitNodes=UnitNodesFun();")];
-                filecontent = [filecontent,  sprintf('%s\n',"UnitDD=UnitDDFun();")];
-               
-                filecontent = [filecontent,  sprintf('%s\n',"BaryWeights=BaryWeightsFun();")];
-                filecontent = [filecontent,  sprintf('%s\n',"d1=0;")];
-                filecontent = [filecontent,  sprintf('%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")))];
+                
+                
                 
                 %non mi servono i parametri ma, le funzioni di ritardo..
                 %e.g. [t-2*TAU].. il massimo sarà 2TAU
@@ -477,8 +471,7 @@ while feof(fid_read)==0  %qui
                 %making the array a string in order to save it in the file
                 vettRitardi=RowVett2Str(vettoreRitardi);
                 fprintf(fid_write,'%s\n',strcat("delayFunctions=",vettRitardi)); 
-                filecontent = [filecontent,  sprintf('%s\n',strcat("delayFunctions=",vettRitardi))];
-               
+                
                 %il massimo positivo sostanzialmente, perchè poi per
                 %max_tau moltiploco i nodi di cheb.
                 
@@ -487,21 +480,16 @@ while feof(fid_read)==0  %qui
                 fprintf(fid_write,'%s\n',strcat("tau_max=",maxT)); 
                 fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
                 fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
-                filecontent = [filecontent,  sprintf('%s\n',strcat("tau_max=",maxT))];
-                filecontent = [filecontent,  sprintf('%s\n',"yM=state((d1*M+1):(d1*M+d2));")];
-                filecontent = [filecontent,  sprintf('%s\n',"VM=state((d1*M+d2+1):end);")];
-                   
+    
                 
                 %if the system has only one equation, write the rhs of GM
                 %without []
                 if(gds.dim==1) 
                     equation=parseDDE(equations(1,:),cor,extractBefore(t,strlength(t)),gds.dim);
                     fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
-                     filecontent = [filecontent,  sprintf('%s\n',strcat("GM = @(x)", strcat (equation,";")))];
-                   
                 else %the system has more equations, we need to use []
                     fprintf(fid_write,'%s',"GM = @(x) [");
-                    filecontent = [filecontent,  sprintf('%s\n',"GM = @(x) [")];
+                    
                     %for each equation except the last, parse it and write
                     %it in the rhs of GM, concatenated with a ;
                     for eqNo=1:dim-1
@@ -510,7 +498,7 @@ while feof(fid_read)==0  %qui
                         disp(equation);
                         fprintf(fid_write,'%s\n',strcat(equation,";"));
                         
-                        filecontent = [filecontent,  sprintf('%s\n',strcat(equation,";"))];
+                        filecontent = [filecontent,  sprintf('%s\n',"];")];
                     end
                     
                     %parsing the last equation and closing the bracket "];"
@@ -546,8 +534,8 @@ while feof(fid_read)==0  %qui
     if ~isempty(findstr(matches,'handles'))
         if(gds.sys_type=="DDE") %if the system is a DDE one, write the follwing init function
             %-_-_-_-_-_-_%
-            fprintf(fid_write,'\n%s\n',"function state_eq=init(M,xeq,yeq)");         
-            filecontent = [filecontent,  sprintf('\n%s\n',"function state_eq=init(M,xeq,yeq)")];
+            fprintf(fid_write,'%s\n',"function state_eq=init(M,xeq,yeq)");         
+            filecontent = [filecontent,  sprintf('%s\n',"function state_eq=init(M,xeq,yeq)")];
             fprintf(fid_write,'%s\n',"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];"); 
             filecontent = [filecontent,  sprintf('%s\n',"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];")];
            
@@ -558,7 +546,7 @@ while feof(fid_read)==0  %qui
             for i=1:dim
                   %scrive sul file del sistema:
                   fprintf(fid_write,'%s\n',string_init{i});
-                  %filecontent = [filecontent,  sprintf('%s\n',string_init{i})];
+                  filecontent = [filecontent,  sprintf('%s\n',string_init{i})];
             end
         end
     end
@@ -621,50 +609,6 @@ while feof(fid_read)==0  %qui
         end
     end
 end
-
-%-_-_-_-_-_-_% 
-%if the system is a DDE one, calculate
-%UnitQuadweights,UnitNodes,UnitDD,BaryWeights and write the respective
-%functions in the file
-if(strcmp(gds.sys_type,"DDE"))
-    
-    %calculate
-    [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
-    
-    fprintf(fid_write,'\n%s\n','function out = UnitQuadweightsFun');
-    fprintf(fid_write,'%s',strcat('out=',RowVett2Str(UnitQuadweights)));
-    
-    fprintf(fid_write,'\n%s\n','function out = UnitNodesFun');
-    fprintf(fid_write,'%s',strcat('out=',ColVett2Str(UnitNodes)));
-    
-    filecontent = [filecontent, sprintf('\n%s\n','function out = UnitQuadweightsFun')];
-    filecontent = [filecontent, sprintf('%s',strcat('out=',RowVett2Str(UnitQuadweights)))];
-    filecontent = [filecontent, sprintf('\n%s\n','function out = UnitNodesFun')];
-    filecontent = [filecontent, sprintf('%s',strcat('out=',ColVett2Str(UnitNodes)))];
-    
-    
-    mat="[";
-    [rows , ~]=size(UnitDD);
-    for i=1:(rows-1)
-        mat=mat+RowVett2StrAux(UnitDD(i,:))+";";
-    end
-    mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];";
-    fprintf(fid_write,'\n%s\n','function out = UnitDDFun');
-    fprintf(fid_write,'%s',strcat('out=',mat));
-    filecontent = [filecontent, sprintf('\n%s\n','function out = UnitDDFun')];
-    filecontent = [filecontent, sprintf('%s',strcat('out=',mat))];
-    
-   
-   
-     
-    fprintf(fid_write,'\n%s\n','function out = BaryWeightsFun');
-    fprintf(fid_write,'%s\n\n',strcat('out=',RowVett2Str(BaryWeights)));
-    filecontent = [filecontent, sprintf('\n%s\n','function out = BaryWeightsFun')];
-    filecontent = [filecontent, sprintf('%s\n\n',strcat('out=',RowVett2Str(BaryWeights)))];
-      
-end
-%-_-_-_-_-_-_%
-
 newlines = strfind(filecontent, 10);
 newline = newlines(1);
 gds.filecontent = filecontent(newline+1:end);
@@ -697,7 +641,35 @@ if ~isempty(gds.options.UserfunctionsInfo)
    end
 end            
 
-
+%-_-_-_-_-_-_% 
+%if the system is a DDE one, calculate
+%UnitQuadweights,UnitNodes,UnitDD,BaryWeights and write the respective
+%functions in the file
+if(strcmp(gds.sys_type,"DDE"))
+    
+    %calculate
+    [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
+    
+    fprintf(fid_write,'\n%s\n','function out = UnitQuadweightsFun');
+    fprintf(fid_write,'%s',strcat('out=',RowVett2Str(UnitQuadweights)));
+    
+    fprintf(fid_write,'\n%s\n','function out = UnitNodesFun');
+    fprintf(fid_write,'%s',strcat('out=',ColVett2Str(UnitNodes)));
+    
+    mat="[";
+    [rows , ~]=size(UnitDD);
+    for i=1:(rows-1)
+        mat=mat+RowVett2StrAux(UnitDD(i,:))+";";
+    end
+    mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];";
+    fprintf(fid_write,'\n%s\n','function out = UnitDDFun');
+    fprintf(fid_write,'%s',strcat('out=',mat));
+     
+    fprintf(fid_write,'\n%s\n','function out = BaryWeightsFun');
+    fprintf(fid_write,'%s',strcat('out=',RowVett2Str(BaryWeights)));
+      
+end
+%-_-_-_-_-_-_%
 
 waitbar(0.95);
 fclose(fid_read);
@@ -732,10 +704,7 @@ if gds.open.integrator==1;integrator;end
 
 cd(path_sys);cd ..;
 rehash;
-if(type=="DDE")
-   vettoreRitardi=getDelayFunctions(equations(1:gds.dim,:),cor,extractBefore(t,strlength(t)),gds.dim);
-   userfun_standalone('Delay0',vettoreRitardi,"D0");
-end
+
 % tempstr.label = 'Point';
 % tempstr.Tag = 'P_O_DO';
 % matcont('point_callback',tempstr)

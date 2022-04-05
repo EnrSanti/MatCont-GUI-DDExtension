@@ -8,6 +8,10 @@ out{6} = [];
 out{7} = [];
 out{8} = [];
 out{9} = [];
+out{10}= @RR3;
+out{11}= @r2;
+out{12}= @r4;
+out{13}= @c;
 
 % --------------------------------------------------------------------------
 function dydt = fun_eval(t,kmrgd,par_r)
@@ -16,8 +20,6 @@ dydt=[par_r*kmrgd(1)*(1-kmrgd(1));];
 % --------------------------------------------------------------------------
 function [tspan,y0,options] = init
 handles = feval(logisticODE);
-y0=[0];
-options = odeset('Jacobian',[],'JacobianP',[],'Hessians',[],'HessiansP',[]);
 tspan = [0 10];
 
 % --------------------------------------------------------------------------
@@ -34,3 +36,11 @@ function tens3  = der3(t,kmrgd,par_r)
 function tens4  = der4(t,kmrgd,par_r)
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_r)
+function userfun1=RR3(t,kmrgd,par_r)
+	userfun1=0;
+function userfun2=r2(t,kmrgd,par_r)
+	userfun2=0;
+function userfun3=r4(t,kmrgd,par_r)
+	userfun3=0;
+function userfun4=c(t,kmrgd,par_r)
+	userfun4=0;

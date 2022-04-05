@@ -5,14 +5,11 @@ function varargout = userfun_standalone(varargin)
 
 % Last Modified by GUIDE v2.0 04-Sep-2002 11:20:31
 global gds oldgds path_sys driver_window MC;
-
-%-_-_-_-_-_-_%
-%launch GUI also if the first cell contains Delay0 (called from
-%systems_standalone
 if nargin == 0 || (varargin{1}=="Delay0")
-%-_-_-_-_-_-_%
-
+  
+       
      % LAUNCH GUI
+
 	fig = openfig(mfilename,'reuse');
     oldgds = gds;
 	% Generate a structure of handles to pass to callbacks, and store it. 
@@ -20,14 +17,10 @@ if nargin == 0 || (varargin{1}=="Delay0")
 	handles = guihandles(fig);
 	guidata(fig, handles);
     load_listbox1(handles);
-    
-    %-_-_-_-_-_-_%
-    %if there are args
+	% Wait for callbacks to run and window to be dismissed:
+	
     if ~(nargin == 0)
-        %get the number of user functions
         s2=size(gds.options.UserfunctionsInfo,2);
-        
-        %search if there is a user function with label D0
         found=0;
         for ind=1:s2
            if(gds.options.UserfunctionsInfo(ind).label=="D0")
@@ -35,27 +28,19 @@ if nargin == 0 || (varargin{1}=="Delay0")
                break;
            end
         end
-        %get the number of delays (functions)
-        sD=size(varargin{2},2);
-        %create the string functiondel1*functiondel2*...
-        strD="";
-        for indDel=1:sD-1
-            strD=strD+"("+varargin{2}(indDel)+")"+"*"
-        end
-        strD=strD+"("+varargin{2}(sD)+")";
-        %set the proper values in the gui elements
-        set(handles.edituserfunction,'String',strcat("res=",strD));
+        set(handles.edituserfunction,'String',strcat("res=",varargin{2}));
         set(handles.name,'String',varargin{3});
         set(handles.label,'String',varargin{3});
-        %if DO existed before, update it
         if(found)
            updatebutton_Callback([],[],handles,[]);
         end  
-        %"ok"
+           1
+               okbutton_Callback([],[],handles,[]);
+        set(handles.edituserfunction,'String',strcat("res=",varargin{2}));
+        set(handles.name,'String',varargin{3});
+        set(handles.label,'String',varargin{3});
         okbutton_Callback([],[],handles,[]);
-    %-_-_-_-_-_-_%
-    else %other case
-       % Wait for callbacks to run and window to be dismissed:
+    else
        uiwait(fig);
     end
 	if nargout > 0
@@ -388,8 +373,6 @@ fprintf(fid_write, '\n');
 for i=1:9+siz
     fprintf(fid_write,'%s\n',string_handles{i,1});
 end
-%-_-_-_-_-_-_%
-
 fprintf(fid_write, '%s', gds.filecontent);
 
 

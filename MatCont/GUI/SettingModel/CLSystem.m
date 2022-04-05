@@ -66,6 +66,8 @@ classdef CLSystem
                     obj.no_discretizationPoints=gds.no_discretizationPoints;
                     obj.no_delays=gds.no_delays;
                     disp("DDE "+obj.no_discretizationPoints);
+                else
+                    disp("ODE");
                 end
             catch 
                 obj.sys_type = systemType.getType(1);  %"ODE"
