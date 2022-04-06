@@ -9,6 +9,10 @@ out{7} = [];
 out{8} = [];
 out{9} = [];
 out{10}= @D0;
+
+% --------------------------------------------------------------------------
+
+
 function dydt = fun_eval (t,state,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
 M=10;
 UnitQuadweights=UnitQuadweightsFun();
@@ -28,8 +32,25 @@ KM=[];
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
 
+% --------------------------------------------------------------------------
+
 function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
+
+% --------------------------------------------------------------------------
+function jac = jacobian(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
+% --------------------------------------------------------------------------
+function jacp = jacobianp(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
+% --------------------------------------------------------------------------
+function hess = hessians(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
+% --------------------------------------------------------------------------
+function hessp = hessiansp(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
+%---------------------------------------------------------------------------
+function tens3  = der3(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
+%---------------------------------------------------------------------------
+function tens4  = der4(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
+%---------------------------------------------------------------------------
+function tens5  = der5(t,kmrgd,par_a,par_b,par_eta,par_r,par_v0,par_TAU)
 
 function out = UnitQuadweightsFun
 out=[0.0050505,0.04729,0.092818,0.12679,0.14961,0.15688,0.14961,0.12679,0.092818,0.04729,0.0050505];

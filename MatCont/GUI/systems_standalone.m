@@ -501,15 +501,13 @@ while feof(fid_read)==0  %qui
                    
                 else %the system has more equations, we need to use []
                     fprintf(fid_write,'%s',"GM = @(x) [");
-                    filecontent = [filecontent,  sprintf('%s\n',"GM = @(x) [")];
+                    filecontent = [filecontent,  sprintf('%s',"GM = @(x) [")];
                     %for each equation except the last, parse it and write
                     %it in the rhs of GM, concatenated with a ;
                     for eqNo=1:dim-1
                         eq=equations(eqNo,:);
                         equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
-                        disp(equation);
                         fprintf(fid_write,'%s\n',strcat(equation,";"));
-                        
                         filecontent = [filecontent,  sprintf('%s\n',strcat(equation,";"))];
                     end
                     

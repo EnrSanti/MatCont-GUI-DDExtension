@@ -22,7 +22,9 @@ if nargin == 0 || (varargin{1}=="Delay0")
     load_listbox1(handles);
     
     %-_-_-_-_-_-_%
-    %if there are args
+    %if there are args then this function has been called from
+    %systems_standalone (to create D0, a User function that signal when a
+    %delay goes to 0)
     if ~(nargin == 0)
         %get the number of user functions
         s2=size(gds.options.UserfunctionsInfo,2);
@@ -42,11 +44,14 @@ if nargin == 0 || (varargin{1}=="Delay0")
         for indDel=1:sD-1
             strD=strD+"("+varargin{2}(indDel)+")"+"*"
         end
+        %end the string representing the function
         strD=strD+"("+varargin{2}(sD)+")";
+        
         %set the proper values in the gui elements
         set(handles.edituserfunction,'String',strcat("res=",strD));
         set(handles.name,'String',varargin{3});
         set(handles.label,'String',varargin{3});
+        
         %if DO existed before, update it
         if(found)
            updatebutton_Callback([],[],handles,[]);

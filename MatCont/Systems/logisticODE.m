@@ -20,6 +20,8 @@ dydt=[par_r*kmrgd(1)*(1-kmrgd(1));];
 % --------------------------------------------------------------------------
 function [tspan,y0,options] = init
 handles = feval(logisticODE);
+y0=[0];
+options = odeset('Jacobian',[],'JacobianP',[],'Hessians',[],'HessiansP',[]);
 tspan = [0 10];
 
 % --------------------------------------------------------------------------
