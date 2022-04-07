@@ -6,11 +6,8 @@ function varargout = userfun_standalone(varargin)
 % Last Modified by GUIDE v2.0 04-Sep-2002 11:20:31
 global gds oldgds path_sys driver_window MC;
 
-%-_-_-_-_-_-_%
-%launch GUI also if the first cell contains Delay0 (called from
-%systems_standalone
-if nargin == 0 || (varargin{1}=="Delay0")
-%-_-_-_-_-_-_%
+
+if nargin == 0
 
      % LAUNCH GUI
 	fig = openfig(mfilename,'reuse');
@@ -21,49 +18,10 @@ if nargin == 0 || (varargin{1}=="Delay0")
 	guidata(fig, handles);
     load_listbox1(handles);
     
-    %-_-_-_-_-_-_%
-    %if there are args then this function has been called from
-    %systems_standalone (to create D0, a User function that signal when a
-    %delay goes to 0)
-    if ~(nargin == 0)
-        %get the number of user functions
-        s2=size(gds.options.UserfunctionsInfo,2);
-        
-        %search if there is a user function with label D0
-        found=0;
-        for ind=1:s2
-           if(gds.options.UserfunctionsInfo(ind).label=="D0")
-               found=1;
-               break;
-           end
-        end
-        %get the number of delays (functions)
-        sD=size(varargin{2},2);
-        %create the string functiondel1*functiondel2*...
-        strD="";
-        for indDel=1:sD-1
-            strD=strD+"("+varargin{2}(indDel)+")*"
-        end
-        %end the string representing the function
-        strD=strD+"("+varargin{2}(sD)+")";
-        
-        %set the proper values in the gui elements
-        %strcat("res=",strD)
-        set(handles.edituserfunction,'String',("res="+strD));
-        set(handles.name,'String',varargin{3});
-        set(handles.label,'String',varargin{3});
-        
-        %if DO existed before, update it
-        if(found)
-           updatebutton_Callback([],[],handles,[]);
-        end  
-        %"ok"
-        okbutton_Callback([],[],handles,[]);
-    %-_-_-_-_-_-_%
-    else %other case
-       % Wait for callbacks to run and window to be dismissed:
-       uiwait(fig);
-    end
+   
+    % Wait for callbacks to run and window to be dismissed:
+    uiwait(fig);
+   
 	if nargout > 0
 		varargout{1} = fig;
 	end

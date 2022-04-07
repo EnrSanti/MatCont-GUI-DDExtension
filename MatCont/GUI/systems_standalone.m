@@ -113,10 +113,6 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
         %setting the help tooltip
         set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
         
-        %setting the delay parameters
-        [r,~]=size(gds.parameters);
-        pos=r-gds.no_delays+1;
-        set(handles.delayPar,'String',strjoin(gds.parameters(pos:end,1),","));
     else
         %if the system is an ODE system, no tooltips for DDE are shown
         set(handles.sys,'Tooltip',"");
@@ -181,7 +177,6 @@ gds.sys_type = type;
 %parametres and the discretization points
 if(strcmp(type,"DDE"))
     gds.no_discretizationPoints = str2num(handles.noDiscPoints.String);
-    gds.no_delays= str2num(handles.delayPar.String);
 end
 %-_-_-_-_-_-_%
 
@@ -192,13 +187,6 @@ original_cor=filterspaces(get(handles.coordinates,'String'));
 
 %i parametri
 original_pa=filterspaces(get(handles.parameters,'String'));
-if(strcmp(type,"DDE"))
-    taus=filterspaces(handles.delayPar.String);
-    original_pa=original_pa+","+taus;
-    gds.no_delays=count(taus,",")+1;
-    disp("numero di ritardi");
-    disp( gds.no_delays);
-end
 
 %le quazioni
 %disp(get(handles.sys,'String'));
@@ -477,8 +465,13 @@ while feof(fid_read)==0  %qui
                 %making the array a string in order to save it in the file
                 vettRitardi=RowVett2Str(vettoreRitardi);
                 fprintf(fid_write,'%s\n',strcat("delayFunctions=",vettRitardi)); 
+                fprintf(fid_write,'%s\n',"if(any(delayFunctions>=0))");
+                fprintf(fid_write,'%s\n',"    error('A delay is negative or zero'); end");
                 filecontent = [filecontent,  sprintf('%s\n',strcat("delayFunctions=",vettRitardi))];
-               
+                
+                filecontent = [filecontent,  sprintf('%s\n',"if(any(delayFunctions>=0))")];
+                filecontent = [filecontent,  sprintf('%s\n',"    error('A delay is negative or zero'); end")];
+
                 %il massimo positivo sostanzialmente, perchè poi per
                 %max_tau moltiploco i nodi di cheb.
                 
@@ -726,10 +719,7 @@ if gds.open.D2>0,for i=1:gds.open.D2,D2;end; end
 if gds.open.D3>0,for i=1:gds.open.D3,plotD3;end; end
 if gds.open.integrator==1;integrator;end
 %}
-if(type=="DDE")
-    vettoreRitardi=getDelayFunctions(original_equations(1:gds.dim,:),original_cor,extractBefore(t,strlength(t)),gds.dim);
-    userfun_standalone('Delay0',unique(vettoreRitardi),"D0");
-end
+
 cd(path_sys);cd ..;
 rehash;
 
@@ -1302,10 +1292,6 @@ dim=size(gds.parameters,1);
 %ODE system
 try 
     set(handles.popupmenu3,'Value',systemType.getPositionOfType(gds.sys_type)); 
-    if(gds.sys_type=="DDE")
-        delays=gds.no_delays;
-        dim=dim-delays;
-    end
 catch
     set(handles.popupmenu3,'Value',systemType.getPositionOfType("ODE"));
 end
@@ -1674,10 +1660,8 @@ global gds;
     %added fields
     gds.sys_type=''; 
     gds.no_discretizationPoints = 0;
-    gds.no_delays=0; 
     %-_-_-_-_-_-_%
     
-    disp("gds con il sys type inizializzato");
     gds.coordinates = []; gds.parameters = [];
     gds.time{1,1} = 't';gds.time{1,2} = 0; gds.options = contset;
     gds.system = '';
@@ -2033,16 +2017,6 @@ function okParameters_Callback(hObject, eventdata, handles)
     DDEPanelOff();
 
 
-% function called when the OK button on the DDE panel is pressed (it
-% turns it off)
-
-% parameters: 
-% hObject    handle to okParameters (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-function cancelParamters_Callback(hObject, eventdata, handles)
-    DDEPanelOff();
 %-_-_-_-_-_-_%
 
 

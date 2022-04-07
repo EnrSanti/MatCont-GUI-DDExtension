@@ -23,12 +23,14 @@ BaryWeights=BaryWeightsFun();
 d1=0;
 d2=2;
 delayFunctions=[-par_TAU,-par_TAU];
+if(any(delayFunctions>=0))
+    error('A delay is negative or zero'); end
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
 VM=state((d1*M+d2+1):end);
 GM = @(x) [yM(1)*(1-yM(1))-par_pred*yM(1)*yM(2)'                                                          ;
 par_conv*par_pred*exp(-par_juv_death*par_TAU)*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights)-par_death*yM(2)];
-KM=[];
+KM=[]; 
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
 
