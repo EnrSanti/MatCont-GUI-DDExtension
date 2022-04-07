@@ -42,13 +42,14 @@ if nargin == 0 || (varargin{1}=="Delay0")
         %create the string functiondel1*functiondel2*...
         strD="";
         for indDel=1:sD-1
-            strD=strD+"("+varargin{2}(indDel)+")"+"*"
+            strD=strD+"("+varargin{2}(indDel)+")*"
         end
         %end the string representing the function
         strD=strD+"("+varargin{2}(sD)+")";
         
         %set the proper values in the gui elements
-        set(handles.edituserfunction,'String',strcat("res=",strD));
+        %strcat("res=",strD)
+        set(handles.edituserfunction,'String',("res="+strD));
         set(handles.name,'String',varargin{3});
         set(handles.label,'String',varargin{3});
         

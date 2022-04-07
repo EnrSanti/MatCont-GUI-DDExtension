@@ -726,14 +726,13 @@ if gds.open.D2>0,for i=1:gds.open.D2,D2;end; end
 if gds.open.D3>0,for i=1:gds.open.D3,plotD3;end; end
 if gds.open.integrator==1;integrator;end
 %}
-
-
+if(type=="DDE")
+    vettoreRitardi=getDelayFunctions(original_equations(1:gds.dim,:),original_cor,extractBefore(t,strlength(t)),gds.dim);
+    userfun_standalone('Delay0',unique(vettoreRitardi),"D0");
+end
 cd(path_sys);cd ..;
 rehash;
-if(type=="DDE")
-   vettoreRitardi=getDelayFunctions(equations(1:gds.dim,:),cor,extractBefore(t,strlength(t)),gds.dim);
-   userfun_standalone('Delay0',vettoreRitardi,"D0");
-end
+
 % tempstr.label = 'Point';
 % tempstr.Tag = 'P_O_DO';
 % matcont('point_callback',tempstr)

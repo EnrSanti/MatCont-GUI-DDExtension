@@ -1,4 +1,4 @@
-function out = MackeyGlass_NM
+function out = Predator_prey_NM
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -9,24 +9,25 @@ out{7} = [];
 out{8} = [];
 out{9} = [];
 out{10}= @D0;
-out{11}= @D1;
+out{11}= @D2;
 
 % --------------------------------------------------------------------------
 
 
-function dydt = fun_eval (t,state,par_beta,par_gamma,par_n,par_TAU)
+function dydt = fun_eval (t,state,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 M=10;
 UnitQuadweights=UnitQuadweightsFun();
 UnitNodes=UnitNodesFun();
 UnitDD=UnitDDFun();
 BaryWeights=BaryWeightsFun();
 d1=0;
-d2=1;
+d2=2;
 delayFunctions=[-par_TAU,-par_TAU];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
 VM=state((d1*M+d2+1):end);
-GM = @(x)par_beta*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)/(1+commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)^par_n)-par_gamma*yM(1);
+GM = @(x) [yM(1)*(1-yM(1))-par_pred*yM(1)*yM(2)'                                                          ;
+par_conv*par_pred*exp(-par_juv_death*par_TAU)*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights)-par_death*yM(2)];
 KM=[];
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
@@ -37,19 +38,19 @@ function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 
 % --------------------------------------------------------------------------
-function jac = jacobian(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function jac = jacobian(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 % --------------------------------------------------------------------------
-function jacp = jacobianp(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function jacp = jacobianp(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 % --------------------------------------------------------------------------
-function hess = hessians(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function hess = hessians(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 % --------------------------------------------------------------------------
-function hessp = hessiansp(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function hessp = hessiansp(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 %---------------------------------------------------------------------------
-function tens3  = der3(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function tens3  = der3(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 %---------------------------------------------------------------------------
-function tens4  = der4(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function tens4  = der4(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 %---------------------------------------------------------------------------
-function tens5  = der5(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function tens5  = der5(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 
 function out = UnitQuadweightsFun
 out=[0.0050505,0.04729,0.092818,0.12679,0.14961,0.15688,0.14961,0.12679,0.092818,0.04729,0.0050505];
@@ -60,7 +61,7 @@ out=[67,-81.7269,20.9443,-9.7037,5.7889,-4,3.0557,-2.5192,2.2111,-2.0502,1;20.43
 function out = BaryWeightsFun
 out=[26214.4,-52428.8,52428.8,-52428.8,52428.8,-52428.8,52428.8,-52428.8,52428.8,-52428.8,26214.4];
 
-function userfun1=D0(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
+function userfun1=D0(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
 	userfun1=(-par_TAU);
-function userfun2=D1(t,kmrgd,par_beta,par_gamma,par_n,par_TAU)
-	userfun2=0;
+function userfun2=D2(t,kmrgd,par_pred,par_juv_death,par_conv,par_death,par_TAU)
+	userfun2=2;
