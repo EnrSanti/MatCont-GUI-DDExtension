@@ -71,6 +71,64 @@ classdef commonFunctions
         end
         
         
+        
+        
+        
+        
+        %da eliminare, solo per test
+        function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
+
+        delayFunctionsns="";
+        %getting the coordinates (x,y...)
+        [coords,~]=split(coords,",");
+        %getting the times
+        [tempi,~]=split(tempi,",");
+
+        %getting how many time variables we have
+        [no_times,~]=size(tempi);
+
+        %for each equation in the system
+        for eqIndex=1:dim
+            %getting the rhs of the current equation considered
+            [eq,~]=split(eqsIn(eqIndex,:),"=");
+            eq=eq(2);
+
+            %getting the string itself
+            eq=cell2mat(eq);
+
+            %for each coordinate substitute
+            for i=1:dim
+                %for each time var
+                for j=1:no_times
+
+                    %if we have multiple time variables, extract one at the time
+                    times(j)=string(tempi(j));
+
+                    %the regular expression of cor_xyz[t(i)...]
+                    expression = coords(i)+"\["+times(j)+"\W(\["+times(j)+"\W[^\]]*\]|[^\]])*\]";
+
+
+                    %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+                    [inizio,fine]=regexp(eq,expression);
+
+                    %getting the value of how many matches we have found with the reg exp 
+                    [~,matches]=size(inizio); %strings begin from 1...
+
+                    %foreach match substitute the expression:
+                    for l=1:matches
+                        %we extract the delay from the string we have found
+                        %(e.g. [t-g(x)] -> g(x))
+                        replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+                        replace=replace{1};
+                        delayFunctionsns(end+1)=replace;
+
+                    end
+                end
+
+            end
+        end
+        delayFunctionsns=delayFunctionsns(2:end);
+        end
  
     end
 end

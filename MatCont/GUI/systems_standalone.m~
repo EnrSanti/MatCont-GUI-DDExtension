@@ -2230,11 +2230,8 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
             %if we have multiple time variables, extract one at the time
             times(j)=string(tempi(j));
             
-            
-            %the regular expression of
-            %cor_xyz[t(i)..cor_xyz[...]...] can recognise a nested
-            %delay
-            expression = coords(i)+"\["+times(j)+"\W(\["+times(j)+"\W[^\]]*\]|[^\]])*\]";
+            %the regular expression of cor_xyz[t(i)...]
+            expression = coords(i)+"\["+times(j)+"\W[^\]]*\]";
             
             
             %getting the arrays of the beginning and ending positions of each match found with the reg exp 
@@ -2313,10 +2310,8 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
                     %if we have multiple time variables, extract one at the time
                     times(j)=string(tempi(j));
 
-                    %the regular expression of
-                    %cor_xyz[t(i)..cor_xyz[...]...] can recognise a nested
-                    %delay
-                    expression = coords(i)+"\["+times(j)+"\W(\["+times(j)+"\W[^\]]*\]|[^\]])*\]";
+                    %the regular expression of cor_xyz[t(i)...]
+                    expression = coords(i)+"\["+times(j)+"\W \( \["+times(j)+"\W \] | [^\]]* \) \]";
 
 
                     %getting the arrays of the beginning and ending positions of each match found with the reg exp 
