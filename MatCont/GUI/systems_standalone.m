@@ -465,13 +465,9 @@ while feof(fid_read)==0  %qui
                 %making the array a string in order to save it in the file
                 vettRitardi=RowVett2Str(vettoreRitardi);
                 fprintf(fid_write,'%s\n',strcat("delayFunctions=",vettRitardi)); 
-                fprintf(fid_write,'%s\n',"if(any(delayFunctions>=0))");
-                fprintf(fid_write,'%s\n',"    error('A delay is negative or zero'); end");
                 filecontent = [filecontent,  sprintf('%s\n',strcat("delayFunctions=",vettRitardi))];
                 
-                filecontent = [filecontent,  sprintf('%s\n',"if(any(delayFunctions>=0))")];
-                filecontent = [filecontent,  sprintf('%s\n',"    error('A delay is negative or zero'); end")];
-
+                
                 %il massimo positivo sostanzialmente, perchè poi per
                 %max_tau moltiploco i nodi di cheb.
                 
@@ -2273,8 +2269,6 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
     %var con yM(i) sostituite
     
     
-    
-%TODO: to refactor for optimization
 
 % function that given the equations (the whole system), the coordinates,
 % the time variables and the system dimension, returns  array containing
@@ -2312,32 +2306,33 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
 
                     %if we have multiple time variables, extract one at the time
                     times(j)=string(tempi(j));
+                    for kk=1:dim
+                        %the regular expression of cor_xyz[t(i)...]
+                        exp2=coords(kk)+"\["+times(j)+"\W[^\]]*\]";
+                        expression = coords(i)+"\["+times(j)+"\W("+exp2+"|[^\]\[]*)\]";
 
-                    %the regular expression of
-                    %cor_xyz[t(i)..cor_xyz[...]...] can recognise a nested
-                    %delay
-                    expression = coords(i)+"\["+times(j)+"\W(\["+times(j)+"\W[^\]]*\]|[^\]])*\]";
 
+                        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+                        [inizio,fine]=regexp(eq,expression);
 
-                    %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-                    [inizio,fine]=regexp(eq,expression);
+                        %getting the value of how many matches we have found with the reg exp 
+                        [~,matches]=size(inizio); %strings begin from 1...
 
-                    %getting the value of how many matches we have found with the reg exp 
-                    [~,matches]=size(inizio); %strings begin from 1...
-
-                    %foreach match substitute the expression:
-                    for l=1:matches
-                        %we extract the delay from the string we have found
-                        %(e.g. [t-g(x)] -> g(x))
-                        replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
-                        replace=replace{1};
-                        delayFunctionsns(end+1)=replace;
-
+                        %foreach match substitute the expression:
+                        for l=1:matches
+                            %we extract the delay from the string we have found
+                            %(e.g. [t-g(x)] -> g(x))
+                            replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+                            replace=replace{1};
+                            delayFunctionsns(end+1)=replace;
+                            
+                        end
                     end
                 end
 
             end
         end
-        delayFunctionsns=delayFunctionsns(2:end);
+        delayFunctionsns=unique(delayFunctionsns(2:end));
+     
     
 %-_-_-_-_-_-_%

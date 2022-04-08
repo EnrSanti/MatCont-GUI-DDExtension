@@ -103,31 +103,33 @@ classdef commonFunctions
 
                     %if we have multiple time variables, extract one at the time
                     times(j)=string(tempi(j));
+                    for kk=1:dim
+                        %the regular expression of cor_xyz[t(i)...]
+                        exp2=coords(kk)+"\["+times(j)+"\W[^\]]*\]";
+                        expression = coords(i)+"\["+times(j)+"\W("+exp2+"|[^\]\[]*)\]";
 
-                    %the regular expression of cor_xyz[t(i)...]
-                    expression = coords(i)+"\["+times(j)+"\W(\["+times(j)+"\W[^\]]*\]|[^\]])*\]";
 
+                        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+                        [inizio,fine]=regexp(eq,expression);
 
-                    %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-                    [inizio,fine]=regexp(eq,expression);
+                        %getting the value of how many matches we have found with the reg exp 
+                        [~,matches]=size(inizio); %strings begin from 1...
 
-                    %getting the value of how many matches we have found with the reg exp 
-                    [~,matches]=size(inizio); %strings begin from 1...
-
-                    %foreach match substitute the expression:
-                    for l=1:matches
-                        %we extract the delay from the string we have found
-                        %(e.g. [t-g(x)] -> g(x))
-                        replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
-                        replace=replace{1};
-                        delayFunctionsns(end+1)=replace;
-
+                        %foreach match substitute the expression:
+                        for l=1:matches
+                            %we extract the delay from the string we have found
+                            %(e.g. [t-g(x)] -> g(x))
+                            replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+                            replace=replace{1};
+                            delayFunctionsns(end+1)=replace;
+                            
+                        end
                     end
                 end
 
             end
         end
-        delayFunctionsns=delayFunctionsns(2:end);
+        delayFunctionsns=unique(delayFunctionsns(2:end));
         end
  
     end
