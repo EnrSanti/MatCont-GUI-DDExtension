@@ -54,6 +54,17 @@ classdef commonFunctions
         %%%%%%% ATTENZIONE ALLA DIMENSIONE d1 o d2
         function PP = interpoly(Theta,Nodes,Values,Weights)
             
+            
+            TOLL=eps;
+            %getting the index and closest val to Theta
+            [closest_val,ii]=commonFunctions.closest_value(Nodes,Theta);
+            %if is sufficiently close approximate the value
+            closest_val=abs(Theta-closest_val);
+            if(closest_val<TOLL)
+                PP=Values(ii);
+                return;
+            end
+            
             n=size(Theta);
             numer=zeros(n);
             denom=zeros(n);
@@ -69,8 +80,6 @@ classdef commonFunctions
             jj=find(exact);
             PP(jj)=Values(exact(jj));
         end
-        
-        
         
         
         
@@ -131,6 +140,66 @@ classdef commonFunctions
         end
         delayFunctionsns=unique(delayFunctionsns(2:end));
         end
- 
+        
+        
+        
+        
+        %CITE:
+        %Benjamin Bernard (2022). Binary search for closest value in an array (https://www.mathworks.com/matlabcentral/fileexchange/37915-binary-search-for-closest-value-in-an-array), MATLAB Central File Exchange. Retrieved April 11, 2022. 
+        function [v, inf] = closest_value(arr, val)
+        % Returns value and index of arr that is closest to val. If several entries
+        % are equally close, return the first. Works fine up to machine error (e.g.
+        % [v, i] = closest_value([4.8, 5], 4.9) will return [5, 2], since in float
+        % representation 4.9 is strictly closer to 5 than 4.8).
+        % ===============
+        % Parameter list:
+        % ===============
+        % arr : increasingly ordered array
+        % val : scalar in R
+        len = length(arr);
+        inf = 1;
+        sup = len;
+        % Binary search for index
+        while sup - inf > 1
+            med = floor((sup + inf)/2);
+
+            % Replace >= here with > to obtain the last index instead of the first.
+            %modified with <= (array ordered from bigger to smallest)
+            if arr(med) <= val 
+                sup = med;
+            else
+                inf = med;
+            end
+        end
+        % Replace < here with <= to obtain the last index instead of the first.
+        if sup - inf == 1 && abs(arr(sup) - val) < abs(arr(inf) - val)
+            inf = sup;
+        end  
+        v = arr(inf);
+        end
+        
+        %get the different parameters from an equation containing an
+        %integral, format: \int_{a}^{b}{expression}{integration variable}
+        function out = getIntegral(eqIn)
+            out="";
+            expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
+
+            %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+            [inizio,fine]=regexp(eqIn,expression);
+
+            %getting the value of how many matches we have found with the reg exp 
+            [~,matches]=size(inizio); %strings begin from 1...
+
+            %foreach match
+            for l=1:matches
+                integral=extractBetween(eqIn,inizio(l)+5,fine(l));
+                expression="{[^}]+}";
+                [inizio1,fine1]=regexp(integral,expression);
+                [~,matches1]=size(inizio1); %strings begin from 1...
+                for kk=1:matches1
+                    disp(extractBetween(integral,inizio1(kk)+1,fine1(kk)-1));
+                end
+            end
+        end
     end
 end

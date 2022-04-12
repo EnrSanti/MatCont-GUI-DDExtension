@@ -475,10 +475,10 @@ while feof(fid_read)==0  %qui
                 maxT="abs(min(delayFunctions));"; % equivalente a max(abs())
                 fprintf(fid_write,'%s\n',strcat("tau_max=",maxT)); 
                 fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
-                fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
+                fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):(d2*(M+1)));"); 
                 filecontent = [filecontent,  sprintf('%s\n',strcat("tau_max=",maxT))];
                 filecontent = [filecontent,  sprintf('%s\n',"yM=state((d1*M+1):(d1*M+d2));")];
-                filecontent = [filecontent,  sprintf('%s\n',"VM=state((d1*M+d2+1):end);")];
+                filecontent = [filecontent,  sprintf('%s\n',"VM=state((d1*M+d2+1):(d2*(M+1)));")];
                    
                 
                 %if the system has only one equation, write the rhs of GM
