@@ -199,6 +199,8 @@ classdef commonFunctions
                 for kk=1:matches1
                     disp(extractBetween(integral,inizio1(kk)+1,fine1(kk)-1));
                 end
+                disp("Nuovo");
+                disp(extractBetween(eqIn,inizio(l),fine(l)));
             end
         end
     end
