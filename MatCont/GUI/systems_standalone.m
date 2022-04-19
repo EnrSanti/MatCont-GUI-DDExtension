@@ -2454,10 +2454,34 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
 
             %getting the whole integral (i.e. \int...{dx})
             integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+            fine(l)=fine(l)+11;
+        
         end
+        
+        
         %checking if funzione ends with diff
+        lenDiff=length(diff{1});
+        if(length(cell2mat(regexp(extractBetween(funzione,length(funzione)-lenDiff,length(funzione)),diff)))>0)
+            eqIn=strrep(eqIn,integral,"\int_{"+a+"}^{"+b+"}"+"{"+extractBetween(funzione,1,length(funzione)-lenDiff)+"var_int_NEW"+diff+"}{"+diff+"}");
         
-        
+            integral=extractBetween(eqIn,inizio(l)+5,fine(l)+11);
+            expression="{[^}]+}";
+
+            %inizio1 and fine1 mark the beginning and the end of each part of
+            %the integral, their len is 4 (a,b,function to integrate, delta)
+            [inizio1,fine1]=regexp(integral,expression);
+
+
+            %getting the various parts
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
+            b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
+            funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+            funzione=funzione{1};
+            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
+
+            %getting the whole integral (i.e. \int...{dx})
+            integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+        end
         
         
         
