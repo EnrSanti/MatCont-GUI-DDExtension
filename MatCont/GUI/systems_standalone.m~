@@ -510,6 +510,7 @@ while feof(fid_read)==0  %qui
                     %parsing the last equation and closing the bracket "];"
                     eqNo=dim;
                    
+                    eq=equations(eqNo,:);
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
                     
@@ -2430,25 +2431,43 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         integral=(extractBetween(eqIn,inizio(l),fine(l)));
         
         b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
-        
-        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");
+       
+        %checking if funzione begins with the varaible
+        %if(funzione inizia con var, sostituisci var con new_
+        if(regexp(extractBetween(funzione,1,length(diff{1})))>0)
+            eqIn=strrep(eqIn,"="+diff,"var_int_NEW"+diff);
+        end
+        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W?");%possibile or con diff|diff+\W e \W+diff
         
         [~,matches2]=size(inizio2); %strings begin from 1...
 
-        fCap="[";
+       
         %foreach match (i.e. for each var in the integral)
-        
-        diff="var_int_"+diff;
+        before="";
+        after="";
+        diff="var_int_NEW"+diff;
         while(length(inizio2)>0)
-            before=funzione(inizio2(ll));
-            after=funzione(fine2(ll));
+            ll=length(inizio2);
+            if(length(regexp(funzione(inizio2(ll)),"\W"))>0)
+                before=funzione(inizio2(ll));
+            end
+            if(length(regexp(funzione(fine2(ll)),"\W"))>0)
+                after=funzione(fine2(ll));
+            end
             substitute=extractBetween(funzione,inizio2(ll),fine2(ll));
-            posizioni=strfind(funzione,substitute);
-            %if(più posizioni)
+            [deleteInizio,deleteFine]=regexp(funzione,substitute);
+
+            [X,Y] = ismember(deleteInizio{1},inizio2);
+            inizio2(Y(X)) = [];
+            
+            [X,Y] = ismember(deleteFine{1},fine2);
+            fine2(Y(X)) = [];
+            
             funzione=strrep(funzione,substitute,before+diff+after);
             funzione=funzione{1};
         end
         
+        fCap="[";
         %for each node
         for kk=1:length(nodes)-1
             fCap=fCap+strrep(funzione,diff,(nodes(kk)+b_a+"+"+b))+","+newline;

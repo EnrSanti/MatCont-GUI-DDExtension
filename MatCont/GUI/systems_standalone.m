@@ -510,6 +510,7 @@ while feof(fid_read)==0  %qui
                     %parsing the last equation and closing the bracket "];"
                     eqNo=dim;
                    
+                    eq=equations(eqNo,:);
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
                     
@@ -2430,19 +2431,56 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         integral=(extractBetween(eqIn,inizio(l),fine(l)));
         
         b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
+       
+        %checking if funzione begins with the varaible
+        %if(funzione inizia con var, sostituisci var con new_
+        if(length(cell2mat(regexp(extractBetween(funzione,1,length(diff{1})),diff)))>0)
+            eqIn=strrep(eqIn,integral,"\int_{"+a+"}^{"+b+"}"+"{var_int_NEW"+diff+extractBetween(funzione,length(diff{1})+1,length(funzione))+"}{"+diff+"}");
         
-        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");
+            integral=extractBetween(eqIn,inizio(l)+5,fine(l)+11);
+            expression="{[^}]+}";
+
+            %inizio1 and fine1 mark the beginning and the end of each part of
+            %the integral, their len is 4 (a,b,function to integrate, delta)
+            [inizio1,fine1]=regexp(integral,expression);
+
+
+            %getting the various parts
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
+            b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
+            funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+            funzione=funzione{1};
+            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
+
+            %getting the whole integral (i.e. \int...{dx})
+            integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+        end
+        %checking if funzione ends with diff
+        
+        
+        
+        
+        
+        
+        
+        
+        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");%possibile or con diff|diff+\W e \W+diff
         
         [~,matches2]=size(inizio2); %strings begin from 1...
 
-        fCap="[";
+       
         %foreach match (i.e. for each var in the integral)
-        
-        diff="var_int_"+diff;
+        before="";
+        after="";
+        diff="var_int_NEW"+diff;
         while(length(inizio2)>0)
             ll=length(inizio2);
-            before=funzione(inizio2(ll));
-            after=funzione(fine2(ll));
+            if(length(regexp(funzione(inizio2(ll)),"\W"))>0)
+                before=funzione(inizio2(ll));
+            end
+            if(length(regexp(funzione(fine2(ll)),"\W"))>0)
+                after=funzione(fine2(ll));
+            end
             substitute=extractBetween(funzione,inizio2(ll),fine2(ll));
             [deleteInizio,deleteFine]=regexp(funzione,substitute);
 
@@ -2455,7 +2493,8 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
             funzione=strrep(funzione,substitute,before+diff+after);
             funzione=funzione{1};
         end
-        
+        %integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+        fCap="[";
         %for each node
         for kk=1:length(nodes)-1
             fCap=fCap+strrep(funzione,diff,(nodes(kk)+b_a+"+"+b))+","+newline;
