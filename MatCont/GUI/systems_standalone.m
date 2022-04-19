@@ -488,10 +488,11 @@ while feof(fid_read)==0  %qui
                 %if the system has only one equation, write the rhs of GM
                 %without []
                 if(gds.dim==1) 
-                    equation=parseDDE(equations(1,:),cor,extractBefore(t,strlength(t)),gds.dim);
+                    equation=(equations(1,:));
+                    equation=parseDDE(equation,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
                     fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
-                     filecontent = [filecontent,  sprintf('%s\n',strcat("GM = @(x)", strcat (equation,";")))];
+                    filecontent = [filecontent,  sprintf('%s\n',strcat("GM = @(x)", strcat (equation,";")))];
                    
                 else %the system has more equations, we need to use []
                     fprintf(fid_write,'%s',"GM = @(x) [");
@@ -508,7 +509,7 @@ while feof(fid_read)==0  %qui
                     
                     %parsing the last equation and closing the bracket "];"
                     eqNo=dim;
-                    eq=equations(eqNo,:); 
+                   
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
                     
@@ -2366,7 +2367,7 @@ function integralVars = getIntegralVars(eqsIn,dim)
 
         %getting the string itself
         eqIn=cell2mat(eqIn);
-        
+        expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
         %getting the arrays of the beginning and ending positions of each match found with the reg exp 
         [inizio,fine]=regexp(eqIn,expression);
 
@@ -2422,6 +2423,7 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
         b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
         funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+        funzione=funzione{1};
         diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
         
         %getting the whole integral (i.e. \int...{dx})
@@ -2429,15 +2431,43 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         
         b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
         
+        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");
+        
+        [~,matches2]=size(inizio2); %strings begin from 1...
+
         fCap="[";
+        %foreach match (i.e. for each var in the integral)
+        
+        diff="var_int_"+diff;
+        while(length(inizio2)>0)
+            ll=length(inizio2);
+            before=funzione(inizio2(ll));
+            after=funzione(fine2(ll));
+            substitute=extractBetween(funzione,inizio2(ll),fine2(ll));
+            [deleteInizio,deleteFine]=regexp(funzione,substitute);
+
+            [X,Y] = ismember(deleteInizio{1},inizio2);
+            inizio2(Y(X)) = [];
+            
+            [X,Y] = ismember(deleteFine{1},fine2);
+            fine2(Y(X)) = [];
+            
+            funzione=strrep(funzione,substitute,before+diff+after);
+            funzione=funzione{1};
+        end
+        
+        %for each node
         for kk=1:length(nodes)-1
             fCap=fCap+strrep(funzione,diff,(nodes(kk)+b_a+"+"+b))+","+newline;
         end
         fCap=fCap+strrep(funzione,diff,(nodes(end)+b_a+"+"+b))+"]";
+
+       
         
         %susbstituing the intergral with dot(f^,weights)*(b-a)
         eqIn=strrep(eqIn,integral,"dot("+fCap+",UnitQuadweights)"+b_a);
         
     end
-        
+    
+
 %-_-_-_-_-_-_%

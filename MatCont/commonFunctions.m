@@ -83,64 +83,50 @@ classdef commonFunctions
         
         
         
-        
         %da eliminare, solo per test
-        function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
+        function eqIn = substituteIntegralVars(eqIn)
+        expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
-        delayFunctionsns="";
-        %getting the coordinates (x,y...)
-        [coords,~]=split(coords,",");
-        %getting the times
-        [tempi,~]=split(tempi,",");
+        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+        [inizio,fine]=regexp(eqIn,expression);
 
-        %getting how many time variables we have
-        [no_times,~]=size(tempi);
+        %getting the value of how many matches we have found with the reg exp 
+        [~,matches]=size(inizio); %strings begin from 1...
 
-        %for each equation in the system
-        for eqIndex=1:dim
-            %getting the rhs of the current equation considered
-            [eq,~]=split(eqsIn(eqIndex,:),"=");
-            eq=eq(2);
+        %foreach match (i.e. for each integral) (from the last)
+        for l=matches:-1:1
+            %setting the parameters and the regular expression to extract the
+            %contents between {}
+            integral=extractBetween(eqIn,inizio(l)+5,fine(l));
+            expression="{[^}]+}";
 
-            %getting the string itself
-            eq=cell2mat(eq);
-
-            %for each coordinate substitute
-            for i=1:dim
-                %for each time var
-                for j=1:no_times
-
-                    %if we have multiple time variables, extract one at the time
-                    times(j)=string(tempi(j));
-                    for kk=1:dim
-                        %the regular expression of cor_xyz[t(i)...]
-                        exp2=coords(kk)+"\["+times(j)+"\W[^\]]*\]";
-                        expression = coords(i)+"\["+times(j)+"\W("+exp2+"|[^\]\[]*)\]";
+            %inizio1 and fine1 mark the beginning and the end of each part of
+            %the integral, their len is 4 (a,b,function to integrate, delta)
+            [inizio1,fine1]=regexp(integral,expression);
 
 
-                        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-                        [inizio,fine]=regexp(eq,expression);
+            %getting the various parts
+            funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
 
-                        %getting the value of how many matches we have found with the reg exp 
-                        [~,matches]=size(inizio); %strings begin from 1...
+            %getting the whole integral (i.e. \int...{dx})
+            integral=(extractBetween(eqIn,inizio(l),fine(l)));
 
-                        %foreach match substitute the expression:
-                        for l=1:matches
-                            %we extract the delay from the string we have found
-                            %(e.g. [t-g(x)] -> g(x))
-                            replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
-                            replace=replace{1};
-                            delayFunctionsns(end+1)=replace;
-                            
-                        end
-                    end
-                end
 
+            %find in the function to integrate all the instances of the
+            %variable 
+            [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");
+            substitute=integral_var_+diff;
+            [~,matches2]=size(inizio2); %strings begin from 1...
+
+            %foreach match (i.e. for each integral)
+            for ll=matches2:-1:1
+                funzione=strrep(funzione,extractBetween(funzione,inizio2(ll),fine2(ll)),substitute);
+                %susbstituing the intergral with dot(f^,weights)*(b-a)
             end
+
         end
-        delayFunctionsns=unique(delayFunctionsns(2:end));
         end
-        
         
         
         
