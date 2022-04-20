@@ -2344,22 +2344,49 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
         end
         delayFunctionsns=checkIntegralVars(unique(delayFunctionsns(2:end)),eqsIn,dim);
      
+        
+        
+        
+% function that given the delay functions of the system, the eqautions in the system 
+% and the number of the equation in the system removes from the delays
+% (vector of strings) the strings that contain a variable present in an
+% integral (i.e. from all the delays in the system we keep only the ones non
+% depending on differentiation variables)
+% delays
+% eqsIn: an array of strings describing the whole system (typed by the
+% user) in the matcont format
+% delays: a string vector containing the delays in the system (e.g.
+% x'=...x[t-g(t)]...y[t-h(t)] ->[g(t),h(t)]
+% dim: an integer denotin the number of equations in the system
 function delays= checkIntegralVars(delays,eqsIn,dim)
     
+    %getting the differetiation variables in the system
     integralVars=getIntegralVars(eqsIn,dim);
+    
+    %the number of deleted delays
     deleted=0;
+    %for each delay
     for i=1:(length(delays))
+        %if the delay contains one of the differentiation variables
         if(contains(delays(i-deleted),integralVars))
+            %delete element and increment the number of deleted elements
             delays(i-deleted)=[]; %elimina elemento
             deleted=deleted+1;
         end
     end 
 
-        
+% function that given the equation in the system, and the dimension of the
+% system returns the array of the differentiation variables used.
+% eqsIn: an array of strings describing the whole system (typed by the
+% user) in the matcont format
+% dim: an integer denotin the number of equations in the system
 function integralVars = getIntegralVars(eqsIn,dim)
+    %initializing empty string array
     integralVars=[""];
+    %expression recognising the structure of an integral
     expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
+    %for each equation
     for eqIndex=1:dim
         
         %getting the rhs of the current equation considered
@@ -2368,6 +2395,7 @@ function integralVars = getIntegralVars(eqsIn,dim)
 
         %getting the string itself
         eqIn=cell2mat(eqIn);
+        %the expression has to be re initialized
         expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
         %getting the arrays of the beginning and ending positions of each match found with the reg exp 
         [inizio,fine]=regexp(eqIn,expression);
@@ -2395,8 +2423,13 @@ function integralVars = getIntegralVars(eqsIn,dim)
         end
     end
     integralVars=integralVars(2:end);
+    
+    
+    
+    
 %function that given a diff equation, gets the different parameters from an equation containing an
-%integral, format: \int_{a}^{b}{expression}{integration variable}
+%integral, format: \int_{a}^{b}{expression}{integration variable} and
+%returns the actual equation to insert in the .m file
 function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
     
     
