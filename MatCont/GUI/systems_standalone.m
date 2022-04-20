@@ -2342,7 +2342,7 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
 
             end
         end
-        delayFunctionsns=checkIntegralVars(unique(delayFunctionsns(2:end)),eqsIn,dim);
+        delayFunctionsns=checkIntegralVars(unique(delayFunctionsns(2:end)),eqsIn,dim,tempi);
      
         
         
@@ -2351,17 +2351,20 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
 % and the number of the equation in the system removes from the delays
 % (vector of strings) the strings that contain a variable present in an
 % integral (i.e. from all the delays in the system we keep only the ones non
-% depending on differentiation variables)
+% depending on differentiation variables) and adds to the vector the delays
+% found in the first extreme of integration
 % delays
 % eqsIn: an array of strings describing the whole system (typed by the
 % user) in the matcont format
 % delays: a string vector containing the delays in the system (e.g.
 % x'=...x[t-g(t)]...y[t-h(t)] ->[g(t),h(t)]
 % dim: an integer denotin the number of equations in the system
-function delays= checkIntegralVars(delays,eqsIn,dim)
+% tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+function delays= checkIntegralVars(delays,eqsIn,dim,tempi)
     
     %getting the differetiation variables in the system
-    integralVars=getIntegralVars(eqsIn,dim);
+    [integralVars,delaysToAdd]=getIntegralVars(eqsIn,dim,tempi);
     
     %the number of deleted delays
     deleted=0;
@@ -2374,13 +2377,22 @@ function delays= checkIntegralVars(delays,eqsIn,dim)
             deleted=deleted+1;
         end
     end 
+    delays=horzcat(delays,delaysToAdd);
 
+    
+    
+    
 % function that given the equation in the system, and the dimension of the
-% system returns the array of the differentiation variables used.
+% system returns the array of the differentiation variables used and the delays arising from the first extreme of integraion .
 % eqsIn: an array of strings describing the whole system (typed by the
 % user) in the matcont format
 % dim: an integer denotin the number of equations in the system
-function integralVars = getIntegralVars(eqsIn,dim)
+%tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
+
+
+    delaysToAdd=[""];
     %initializing empty string array
     integralVars=[""];
     %expression recognising the structure of an integral
@@ -2416,13 +2428,30 @@ function integralVars = getIntegralVars(eqsIn,dim)
 
             inizio1=cell2mat(inizio1);
             fine1=cell2mat(fine1)
-            %getting the various parts
+            
+            %getting the various parts (the first extreme of intregration
+            %and the integration variable)
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1)
             diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
 
+            %adding the integration variable to the list to return
             integralVars(end+1)=string(diff);
+            
+            a=string(a);
+            %if the extreme of integration contains the time then it must
+            %be in the form of T-f(...) otherwise the user inserted
+            %something wrong
+            for timeNo=1:length(tempi)
+                if(contains(a,tempi(timeNo)))
+                    a=extractAfter(a,length(tempi(timeNo)));
+                end
+            end
+            %adding the delay to the list to return
+            delaysToAdd(end+1)=a;
         end
     end
     integralVars=integralVars(2:end);
+    delaysToAdd=delaysToAdd(2:end);
     
     
     
