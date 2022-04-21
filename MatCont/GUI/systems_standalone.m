@@ -2550,7 +2550,7 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         
         
         
-        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");%possibile or con diff|diff+\W e \W+diff
+        [inizio2,fine2]=regexp(funzione,"\W"+diff+"(?=\W)"); %lookahead
         
         [~,matches2]=size(inizio2); %strings begin from 1...
 
@@ -2563,12 +2563,23 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
             ll=length(inizio2);
             if(length(regexp(funzione(inizio2(ll)),"\W"))>0)
                 before=funzione(inizio2(ll));
+               
             end
-            if(length(regexp(funzione(fine2(ll)),"\W"))>0)
-                after=funzione(fine2(ll));
+            if(length(regexp(funzione(fine2(ll)+1),"\W"))>0)
+                after=funzione(fine2(ll)+1);
+               
             end
-            substitute=extractBetween(funzione,inizio2(ll),fine2(ll));
-            [deleteInizio,deleteFine]=regexp(funzione,substitute);
+            substituteString=extractBetween(funzione,inizio2(ll),fine2(ll)+1);
+            findsubstitute=substituteString;
+            if(before=="^")
+                findsubstitute="\"+findsubstitute; %escaping ^
+                findsubstitute=cellstr(findsubstitute);
+            end
+            if(after=="^")
+                findsubstitute=extractBefore(substituteString,strlength(substituteString))+"\^"; %escaping ^
+                findsubstitute=cellstr(findsubstitute);
+            end
+            [deleteInizio,deleteFine]=regexp(funzione,findsubstitute);
 
             [X,Y] = ismember(deleteInizio{1},inizio2);
             inizio2(Y(X)) = [];
@@ -2576,7 +2587,7 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
             [X,Y] = ismember(deleteFine{1},fine2);
             fine2(Y(X)) = [];
             
-            funzione=strrep(funzione,substitute,before+diff+after);
+            funzione=strrep(funzione,substituteString,before+diff+after);
             funzione=funzione{1};
         end
         %integral=(extractBetween(eqIn,inizio(l),fine(l)+11));

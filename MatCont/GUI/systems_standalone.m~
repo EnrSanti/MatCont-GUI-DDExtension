@@ -2351,7 +2351,8 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
 % and the number of the equation in the system removes from the delays
 % (vector of strings) the strings that contain a variable present in an
 % integral (i.e. from all the delays in the system we keep only the ones non
-% depending on differentiation variables)
+% depending on differentiation variables) and adds to the vector the delays
+% found in the first extreme of integration
 % delays
 % eqsIn: an array of strings describing the whole system (typed by the
 % user) in the matcont format
@@ -2376,12 +2377,13 @@ function delays= checkIntegralVars(delays,eqsIn,dim,tempi)
             deleted=deleted+1;
         end
     end 
+    delays=horzcat(delays,delaysToAdd);
 
     
     
     
 % function that given the equation in the system, and the dimension of the
-% system returns the array of the differentiation variables used.
+% system returns the array of the differentiation variables used and the delays arising from the first extreme of integraion .
 % eqsIn: an array of strings describing the whole system (typed by the
 % user) in the matcont format
 % dim: an integer denotin the number of equations in the system
@@ -2439,15 +2441,17 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
             %if the extreme of integration contains the time then it must
             %be in the form of T-f(...) otherwise the user inserted
             %something wrong
-            if(contains(a,tempi))
-                %delete element and increment the number of deleted elements
-                
+            for timeNo=1:length(tempi)
+                if(contains(a,tempi(timeNo)))
+                    a=extractAfter(a,length(tempi(timeNo)));
+                end
             end
             %adding the delay to the list to return
             delaysToAdd(end+1)=a;
         end
     end
     integralVars=integralVars(2:end);
+    delaysToAdd=delaysToAdd(2:end);
     
     
     
@@ -2546,7 +2550,7 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         
         
         
-        [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");%possibile or con diff|diff+\W e \W+diff
+        [inizio2,fine2]=regexp(funzione,"\W"+diff+"(?=\W)"); %lookahead
         
         [~,matches2]=size(inizio2); %strings begin from 1...
 
@@ -2559,11 +2563,14 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
             ll=length(inizio2);
             if(length(regexp(funzione(inizio2(ll)),"\W"))>0)
                 before=funzione(inizio2(ll));
+               
             end
-            if(length(regexp(funzione(fine2(ll)),"\W"))>0)
-                after=funzione(fine2(ll));
+            if(length(regexp(funzione(fine2(ll)+1),"\W"))>0)
+                after=funzione(fine2(ll)+1);
+               
             end
-            substitute=extractBetween(funzione,inizio2(ll),fine2(ll));
+            substitute=extractBetween(funzione,inizio2(ll),fine2(ll)+1);
+            if()
             [deleteInizio,deleteFine]=regexp(funzione,substitute);
 
             [X,Y] = ismember(deleteInizio{1},inizio2);

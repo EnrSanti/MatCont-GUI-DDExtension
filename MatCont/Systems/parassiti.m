@@ -75,6 +75,9 @@ par_alpha1*commonFunctions.interpoly(-par_T1p,tau_max*UnitNodes,[yM(7);VM(7:d2:e
 KM=[]; 
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
+if(any(isnan(dydt)))
+    disp("a");
+end
 
 % --------------------------------------------------------------------------
 
