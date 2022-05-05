@@ -352,7 +352,6 @@ fprintf(fid_write, '\n');
 for i=1:9+siz
     fprintf(fid_write,'%s\n',string_handles{i,1});
 end
-%-_-_-_-_-_-_%
 
 fprintf(fid_write, '%s', gds.filecontent);
 

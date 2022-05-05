@@ -20,21 +20,21 @@ UnitDD=UnitDDFun();
 BaryWeights=BaryWeightsFun();
 d1=0;
 d2=1;
-delayFunctions=[-par_h];
+delayFunctions=[-102];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
 VM=state((d1*M+d2+1):(d2*(M+1)));
-GM = @(x)-2*yM(1)+dot([(1+0*(0-(-par_h))+0+0*(0-(-par_h))+0^3)*commonFunctions.interpoly(+0*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.024472*(0-(-par_h))+0+-0.024472*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.024472*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.095492*(0-(-par_h))+0+-0.095492*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.095492*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.20611*(0-(-par_h))+0+-0.20611*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.20611*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.34549*(0-(-par_h))+0+-0.34549*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.34549*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.5*(0-(-par_h))+0+-0.5*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.5*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.65451*(0-(-par_h))+0+-0.65451*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.65451*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.79389*(0-(-par_h))+0+-0.79389*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.79389*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.90451*(0-(-par_h))+0+-0.90451*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.90451*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-0.97553*(0-(-par_h))+0+-0.97553*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-0.97553*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights),
-(1+-1*(0-(-par_h))+0+-1*(0-(-par_h))+0^3)*commonFunctions.interpoly(+-1*(0-(-par_h))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)],UnitQuadweights)*(0-(-par_h));
+GM = @(x)-2*yM(1)+dot([0*(0-(-102))+0-(1+0*(0-(-102))+0+0*(0-(-102))+0^3)*commonFunctions.interpoly(+0*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(-0*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*0*(0-(-102))+0,
+-0.024472*(0-(-102))+0-(1+-0.024472*(0-(-102))+0+-0.024472*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.024472*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.024472*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.024472*(0-(-102))+0,
+-0.095492*(0-(-102))+0-(1+-0.095492*(0-(-102))+0+-0.095492*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.095492*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.095492*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.095492*(0-(-102))+0,
+-0.20611*(0-(-102))+0-(1+-0.20611*(0-(-102))+0+-0.20611*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.20611*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.20611*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.20611*(0-(-102))+0,
+-0.34549*(0-(-102))+0-(1+-0.34549*(0-(-102))+0+-0.34549*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.34549*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.34549*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.34549*(0-(-102))+0,
+-0.5*(0-(-102))+0-(1+-0.5*(0-(-102))+0+-0.5*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.5*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.5*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.5*(0-(-102))+0,
+-0.65451*(0-(-102))+0-(1+-0.65451*(0-(-102))+0+-0.65451*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.65451*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.65451*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.65451*(0-(-102))+0,
+-0.79389*(0-(-102))+0-(1+-0.79389*(0-(-102))+0+-0.79389*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.79389*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.79389*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.79389*(0-(-102))+0,
+-0.90451*(0-(-102))+0-(1+-0.90451*(0-(-102))+0+-0.90451*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.90451*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.90451*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.90451*(0-(-102))+0,
+-0.97553*(0-(-102))+0-(1+-0.97553*(0-(-102))+0+-0.97553*(0-(-102))+0^3)*commonFunctions.interpoly(+-0.97553*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--0.97553*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-0.97553*(0-(-102))+0,
+-1*(0-(-102))+0-(1+-1*(0-(-102))+0+-1*(0-(-102))+0^3)*commonFunctions.interpoly(+-1*(0-(-102))+0,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(--1*(0-(-102))+0*2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+32*-1*(0-(-102))+0],UnitQuadweights)*(0-(-102));
 KM=[]; 
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];

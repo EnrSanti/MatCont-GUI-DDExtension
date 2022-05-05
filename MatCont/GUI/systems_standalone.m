@@ -410,8 +410,8 @@ while feof(fid_read)==0  %qui
            fprintf(fid_write,'\n\n%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));        
            filecontent = [filecontent,  sprintf('\n\n%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")))];
         else
-            fprintf(fid_write,'%s\n',matches);   
-            filecontent = [filecontent,  sprintf('%s\n',matches)];
+           fprintf(fid_write,'%s\n',matches);   
+           filecontent = [filecontent,  sprintf('%s\n',matches)];
         end
 
     end
@@ -490,7 +490,7 @@ while feof(fid_read)==0  %qui
                 if(gds.dim==1) 
                     equation=(equations(1,:));
                     equation=parseDDE(equation,cor,extractBefore(t,strlength(t)),gds.dim);
-                    equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
+                    equation=parseIntegral(equation,UnitNodes);
                     fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
                     filecontent = [filecontent,  sprintf('%s\n',strcat("GM = @(x)", strcat (equation,";")))];
                    
@@ -502,7 +502,7 @@ while feof(fid_read)==0  %qui
                     for eqNo=1:dim-1
                         eq=equations(eqNo,:);
                         equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
-                        equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
+                        equation=parseIntegral(equation,UnitNodes);
                         fprintf(fid_write,'%s\n',strcat(equation,";"));
                         filecontent = [filecontent,  sprintf('%s\n',strcat(equation,";"))];
                     end
@@ -512,7 +512,7 @@ while feof(fid_read)==0  %qui
                    
                     eq=equations(eqNo,:);
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
-                    equation=parseIntegral(equation,UnitQuadweights,UnitNodes);
+                    equation=parseIntegral(equation,UnitNodes);
                     
                     fprintf(fid_write,'%s',equation);
                     fprintf(fid_write,'%s\n',"];");
@@ -2282,7 +2282,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
 % the time variables and the system dimension, returns  array containing
 % all the delay functions used in the system (with duplicates) TODO:
 % optimize
-% eqsIn: an array of strings describing the whole system (typed by the
+%p eqsIn: an array of strings describing the whole system (typed by the
 % user) in the matcont format
 %tempi: a string containing the time variables, divided by "," (e.g
 %"t1,t2")
@@ -2377,6 +2377,7 @@ function delays= checkIntegralVars(delays,eqsIn,dim,tempi)
             deleted=deleted+1;
         end
     end 
+    %concat to create a unique vector of delays
     delays=horzcat(delays,delaysToAdd);
 
     
@@ -2396,7 +2397,8 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
     %initializing empty string array
     integralVars=[""];
     %expression recognising the structure of an integral
-    expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
+    integralRegExp = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}"; 
+    integralPartsRegExp="{[^}]+}";
 
     %for each equation
     for eqIndex=1:dim
@@ -2407,10 +2409,8 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
 
         %getting the string itself
         eqIn=cell2mat(eqIn);
-        %the expression has to be re initialized
-        expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
         %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-        [inizio,fine]=regexp(eqIn,expression);
+        [inizio,fine]=regexp(eqIn,integralRegExp); 
 
         %getting the value of how many matches we have found with the reg exp 
         [~,matches]=size(inizio); %strings begin from 1...
@@ -2420,38 +2420,48 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
             %setting the parameters and the regular expression to extract the
             %contents between {}
             integral=extractBetween(eqIn,inizio(l)+5,fine(l));
-            expression="{[^}]+}";
 
             %inizio1 and fine1 mark the beginning and the end of each part of
             %the integral, their len is 4 (a,b,function to integrate, delta)
-            [inizio1,fine1]=regexp(integral,expression);
+            [inizio1,fine1]=regexp(integral,integralPartsRegExp);
 
             inizio1=cell2mat(inizio1);
             fine1=cell2mat(fine1)
             
-            %getting the various parts (the first extreme of intregration
+            %getting the various parts (the first and second extreme of intregration
             %and the integration variable)
-            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1)
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);
+            b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
             diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
 
             %adding the integration variable to the list to return
             integralVars(end+1)=string(diff);
             
+            %extracting the string from the cells
             a=string(a);
-            %if the extreme of integration contains the time then it must
-            %be in the form of T-f(...) otherwise the user inserted
-            %something wrong
+            b=string(b);
+            
+          
+            
+            %{
             for timeNo=1:length(tempi)
                 if(contains(a,tempi(timeNo)))
                     a=extractAfter(a,length(tempi(timeNo)));
                 end
             end
-            %adding the delay to the list to return
+            %}
+            
+            %adding the extremese to the delay list to return (since
+            %depending on a,b >0 or a,b<0 \int_{a}^{b}{... x[t +/- s]}{s}
+            %in the first case (a,b>0 and x[t-s]) the maximum value of s
+            %will be in b, and in the second case (a,b<0 and x[t+s]) it
+            %will be in a
             delaysToAdd(end+1)=a;
+            delaysToAdd(end+1)=b;
         end
     end
-    integralVars=integralVars(2:end);
-    delaysToAdd=delaysToAdd(2:end);
+    integralVars=integralVars(2:end); %removing the starting ""
+    delaysToAdd=delaysToAdd(2:end); %removing the starting ""
     
     
     
@@ -2459,8 +2469,7 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
 %function that given a diff equation, gets the different parameters from an equation containing an
 %integral, format: \int_{a}^{b}{expression}{integration variable} and
 %returns the actual equation to insert in the .m file
-function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
-    
+function eqIn = parseIntegral(eqIn,nodes) 
     
     expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
@@ -2470,21 +2479,24 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
     %getting the value of how many matches we have found with the reg exp 
     [~,matches]=size(inizio); %strings begin from 1...
 
-    %foreach match (i.e. for each integral)
+    %the expression to get the different integral components    
+    expression="{[^}]+}";
+    
+    %foreach match (i.e. for each integral) (loop "backwards")
     for l=matches:-1:1
-        %setting the parameters and the regular expression to extract the
+        %setting the parameters to extract the
         %contents between {}
         integral=extractBetween(eqIn,inizio(l)+5,fine(l));
-        expression="{[^}]+}";
+        
         
         %inizio1 and fine1 mark the beginning and the end of each part of
-        %the integral, their len is 4 (a,b,function to integrate, delta)
+        %the integral, their len is 4 (a,b,function to integrate, dx)
         [inizio1,fine1]=regexp(integral,expression);
         
 
         %getting the various parts
         a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
-        b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
+        b=extractBetween(integral,inizio1(  2)+1,fine1(2)-1);
         funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
         funzione=funzione{1};
         diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
@@ -2492,9 +2504,10 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
         %getting the whole integral (i.e. \int...{dx})
         integral=(extractBetween(eqIn,inizio(l),fine(l)));
         
+        %creating the string *(b-(a)) to not recompute it every time
         b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
        
-        %checking if funzione begins with the varaible
+        %checking if funzione begins with the intergration varaible
         %if(funzione inizia con var, sostituisci var con new_
         if(length(cell2mat(regexp(extractBetween(funzione,1,length(diff{1})),diff)))>0)
             eqIn=strrep(eqIn,integral,"\int_{"+a+"}^{"+b+"}"+"{var_int_NEW"+diff+extractBetween(funzione,length(diff{1})+1,length(funzione))+"}{"+diff+"}");
@@ -2507,7 +2520,7 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
             [inizio1,fine1]=regexp(integral,expression);
 
 
-            %getting the various parts
+            %getting the various parts again
             a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
             b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
             funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
@@ -2545,11 +2558,7 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
             integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
         end
         
-        
-        
-        
-        
-        
+ 
         [inizio2,fine2]=regexp(funzione,"\W"+diff+"(?=\W)"); %lookahead
         
         [~,matches2]=size(inizio2); %strings begin from 1...
@@ -2579,20 +2588,30 @@ function eqIn = parseIntegral(eqIn,weights,nodes) %weights è inutile
                 findsubstitute=extractBefore(substituteString,strlength(substituteString))+"\^"; %escaping ^
                 findsubstitute=cellstr(findsubstitute);
             end
+            
             [deleteInizio,deleteFine]=regexp(funzione,findsubstitute);
-
+            
+            %deleteing the initial positions of the same string (there will
+            %all be susbstitued)
             [X,Y] = ismember(deleteInizio{1},inizio2);
             inizio2(Y(X)) = [];
             
+            %deleteing the final positions of the same string (there will
+            %all be susbstitued)
             [X,Y] = ismember(deleteFine{1},fine2);
             fine2(Y(X)) = [];
             
+            
             funzione=strrep(funzione,substituteString,before+diff+after);
             funzione=funzione{1};
+        
         end
-        %integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+        
+        
+        
+        
         fCap="[";
-        %for each node
+        %for each node (m+1)-1,create the proper string to put in the array
         for kk=1:length(nodes)-1
             fCap=fCap+strrep(funzione,diff,(nodes(kk)+b_a+"+"+b))+","+newline;
         end
