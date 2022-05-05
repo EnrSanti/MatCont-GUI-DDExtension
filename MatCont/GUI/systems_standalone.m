@@ -395,7 +395,7 @@ while feof(fid_read)==0  %qui
         for i=1:9+siz
             %scrive sul file del sistema:
             fprintf(fid_write,'%s\n',string_handles{i,1});
-            %filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
+            filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
         end
     end        
     
@@ -488,6 +488,7 @@ while feof(fid_read)==0  %qui
                 %if the system has only one equation, write the rhs of GM
                 %without []
                 if(gds.dim==1) 
+                    
                     equation=(equations(1,:));
                     equation=parseDDE(equation,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitNodes);
@@ -532,7 +533,6 @@ while feof(fid_read)==0  %qui
             
         else %if the system is an ODE one, write every equation
             for i=1:dim
-                  %scrive sul file del sistema:
                   
                   fprintf(fid_write,'%s\n',string_sys{i}); 
                   filecontent = [filecontent,  sprintf('%s\n',string_sys{i})];
@@ -554,7 +554,7 @@ while feof(fid_read)==0  %qui
             for i=1:dim
                   %scrive sul file del sistema:
                   fprintf(fid_write,'%s\n',string_init{i});
-                  %filecontent = [filecontent,  sprintf('%s\n',string_init{i})];
+                  filecontent = [filecontent,  sprintf('%s\n',string_init{i})];
             end
         end
     end
@@ -2225,8 +2225,8 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
     
     %for each coordinate substitute
     for i=1:dim
-        aux=dim;
-        aux=aux-i;
+        %aux=dim;
+        %aux=aux-i; ultima modifica
         %for each time var
         for j=1:no_times
             
