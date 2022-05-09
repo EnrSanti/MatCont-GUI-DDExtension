@@ -476,7 +476,6 @@ while feof(fid_read)==0  %qui
                 %if the system has only one equation, write the rhs of GM
                 %without []
                 if(gds.dim==1) 
-                    
                     equation=(equations(1,:));
                     if(isRE(equation))
                        disp("RE found -> eq n. 1");
@@ -517,12 +516,13 @@ while feof(fid_read)==0  %qui
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));");  
                 
                 %if the system contains also Renewal equations write the
-                %expression for KM, dMDM_RE and the proper dy/dt else
+                %expression for KM, dMDM_RE, UM and the proper dy/dt else
                 %KM=[], and dy/dt without the renewal part
                 if(REno>0)
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:d1*M);");
                     %da modificare con l'espressione corretta
-                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,"KM = fsolve(@(x) x-FM(x),UM(1:d1),opt_fsolve");
-                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"KM = -------------");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [(1/tau_max*dMDM_RE)*[KM;UM];GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];");
                 else
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"KM=[]; "); 
