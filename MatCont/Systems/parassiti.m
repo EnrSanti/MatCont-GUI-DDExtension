@@ -20,7 +20,7 @@ UnitDD=UnitDDFun();
 BaryWeights=BaryWeightsFun();
 d1=0;
 d2=7;
-delayFunctions=[-par_T1p,-par_T2p,-par_Te1,-par_Te2,-par_Tl1-par_Te1,-par_Tl2-par_Te2,-par_Tl1,-par_Tl2,-par_Tl1,-par_Tl2];
+delayFunctions=[-par_T1p,-par_T2p,-par_Te1,-par_Te2,-par_Tl1-par_Te1,-par_Tl2-par_Te2,-par_Tl1,0,-par_Tl2,0,-par_Tl1,0,-par_Tl2,0];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
 VM=state((d1*M+d2+1):(d2*(M+1)));
@@ -76,7 +76,6 @@ dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
-
 function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 

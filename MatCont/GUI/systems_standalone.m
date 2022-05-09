@@ -86,9 +86,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     %to avoid the warning of an anomalous value in the dropdown menu
     set(handles.popupmenu3,'Value',1); %evito warining
     %-_-_-_-_-_-_%
-    
     set(fig, 'visible', 'on');
-    
     %-_-_-_-_-_-_%
     %un gds c'è, è vuoto se è premuto su "new" oppure quello caricato
     %se è stato premuto su edit, quindi, se non sono nel primo caso carico
@@ -395,7 +393,7 @@ while feof(fid_read)==0  %qui
         for i=1:9+siz
             %scrive sul file del sistema:
             fprintf(fid_write,'%s\n',string_handles{i,1});
-            filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
+            %filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
         end
     end        
     
@@ -407,11 +405,9 @@ while feof(fid_read)==0  %qui
     if(~(gds.sys_type=="DDE" && (contains(matches,"function [")||contains(matches,"handles = feval") || contains(matches,"y0=[")|| contains(matches,"options = odeset")|| contains(matches,"tspan = ["))))
         
         if(contains(matches,"function dydt") && gds.sys_type=="DDE")
-           fprintf(fid_write,'\n\n%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));        
-           filecontent = [filecontent,  sprintf('\n\n%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")))];
+            filecontent = write_M_and_File_Content(fid_write,'\n\n%s\n',filecontent,strcat("function dydt = fun_eval (t,state",strcat(par,")")));
         else
-           fprintf(fid_write,'%s\n',matches);   
-           filecontent = [filecontent,  sprintf('%s\n',matches)];
+            filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,matches);
         end
 
     end
@@ -434,26 +430,24 @@ while feof(fid_read)==0  %qui
         if(gds.sys_type=="DDE")
             
             %-_-_-_-_-_-_%
+                %getting the no. of RE equations in the system
+                REno=getREno(equations);
+                DDEno=gds.dim-REno;
+            
+            
                 %write in the m file the number of discretization points
-                fprintf(fid_write,'%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
-                filecontent = [filecontent,  sprintf('%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")))];
-               
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
+              
                 %write in the file all the variables needed in the fun_eval
                 %method
-                fprintf(fid_write,'%s\n',"UnitQuadweights=UnitQuadweightsFun();"); 
-                fprintf(fid_write,'%s\n',"UnitNodes=UnitNodesFun();"); 
-                fprintf(fid_write,'%s\n',"UnitDD=UnitDDFun();"); 
-                fprintf(fid_write,'%s\n',"BaryWeights=BaryWeightsFun();"); 
-                fprintf(fid_write,'%s\n',"d1=0;"); 
-                fprintf(fid_write,'%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")));
-               
-                filecontent = [filecontent,  sprintf('%s\n',"UnitQuadweights=UnitQuadweightsFun();")];
-                filecontent = [filecontent,  sprintf('%s\n',"UnitNodes=UnitNodesFun();")];
-                filecontent = [filecontent,  sprintf('%s\n',"UnitDD=UnitDDFun();")];
-               
-                filecontent = [filecontent,  sprintf('%s\n',"BaryWeights=BaryWeightsFun();")];
-                filecontent = [filecontent,  sprintf('%s\n',"d1=0;")];
-                filecontent = [filecontent,  sprintf('%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")))];
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitQuadweights=UnitQuadweightsFun();");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitNodes=UnitNodesFun();");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitDD=UnitDDFun();");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"BaryWeights=BaryWeightsFun();");
+                
+                %writing on file the number of RE and DDE
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d1=",strcat(sprintf('%d',REno),";")));
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d2=",strcat(sprintf('%d',DDEno),";")));
                 
                 %non mi servono i parametri ma, le funzioni di ritardo..
                 %e.g. [t-2*TAU].. il massimo sarà 2TAU
@@ -463,9 +457,8 @@ while feof(fid_read)==0  %qui
                 %il vettore è però da trasformare in str
                 
                 %making the array a string in order to save it in the file
-                vettRitardi=RowVett2Str(vettoreRitardi);
-                fprintf(fid_write,'%s\n',strcat("delayFunctions=",vettRitardi)); 
-                filecontent = [filecontent,  sprintf('%s\n',strcat("delayFunctions=",vettRitardi))];
+                vettRitardi=RowVett2Str(vettoreRitardi);                
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("delayFunctions=",vettRitardi));
                 
                 
                 %il massimo positivo sostanzialmente, perchè poi per
@@ -473,67 +466,74 @@ while feof(fid_read)==0  %qui
                 
                 %writing in the file
                 maxT="abs(min(delayFunctions));"; % equivalente a max(abs())
-                fprintf(fid_write,'%s\n',strcat("tau_max=",maxT)); 
-                fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
-                fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):(d2*(M+1)));"); 
-                filecontent = [filecontent,  sprintf('%s\n',strcat("tau_max=",maxT))];
-                filecontent = [filecontent,  sprintf('%s\n',"yM=state((d1*M+1):(d1*M+d2));")];
-                filecontent = [filecontent,  sprintf('%s\n',"VM=state((d1*M+d2+1):(d2*(M+1)));")];
-                   
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state((d1*M+1):(d1*M+d2));");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state((d1*M+d2+1):(d2*(M+1)));");                   
                 
                 %calculate the following arrays
                 [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
-    
-                
+                    
                 %if the system has only one equation, write the rhs of GM
                 %without []
                 if(gds.dim==1) 
                     
                     equation=(equations(1,:));
+                    if(isRE(equation))
+                       disp("RE found -> eq n. 1");
+                    end
                     equation=parseDDE(equation,cor,extractBefore(t,strlength(t)),gds.dim);
-                    equation=parseIntegral(equation,UnitNodes);
-                    fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
-                    filecontent = [filecontent,  sprintf('%s\n',strcat("GM = @(x)", strcat (equation,";")))];
+                    equation=parseIntegral(equation,UnitNodes);                    
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("GM = @(x)", strcat (equation,";")));                   
                    
                 else %the system has more equations, we need to use []
-                    fprintf(fid_write,'%s',"GM = @(x) [");
-                    filecontent = [filecontent,  sprintf('%s',"GM = @(x) [")];
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,"GM = @(x) [");  
                     %for each equation except the last, parse it and write
                     %it in the rhs of GM, concatenated with a ;
                     for eqNo=1:dim-1
                         eq=equations(eqNo,:);
+                        if(isRE(eq))
+                            disp("RE found -> eq n. "+eqNo);
+                        end
                         equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
                         equation=parseIntegral(equation,UnitNodes);
-                        fprintf(fid_write,'%s\n',strcat(equation,";"));
-                        filecontent = [filecontent,  sprintf('%s\n',strcat(equation,";"))];
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(equation,";"));  
                     end
                     
                     %parsing the last equation and closing the bracket "];"
                     eqNo=dim;
                    
                     eq=equations(eqNo,:);
+                    if(isRE(eq))
+                        disp("RE found -> eq n. "+eqNo);
+                    end
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitNodes);
                     
-                    fprintf(fid_write,'%s',equation);
-                    fprintf(fid_write,'%s\n',"];");
-                    
-                    filecontent = [filecontent,  sprintf('%s',equation)];
-                    filecontent = [filecontent,  sprintf('%s\n',"];")];
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"];");  
                 end
-
+                
                 %write in the file (fun_eval)
-                fprintf(fid_write,'%s\n',"KM=[]; "); 
-                fprintf(fid_write,'%s\n',"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));"); 
-                fprintf(fid_write,'%s\n',"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];"); 
-                filecontent = [filecontent,  sprintf('%s\n',"KM=[];" )];
-                filecontent = [filecontent,  sprintf('%s\n',"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));")];
-                filecontent = [filecontent,  sprintf('%s\n',"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];")];
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));");  
+                
+                %if the system contains also Renewal equations write the
+                %expression for KM, dMDM_RE and the proper dy/dt else
+                %KM=[], and dy/dt without the renewal part
+                if(REno>0)
+                    %da modificare con l'espressione corretta
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,"KM = fsolve(@(x) x-FM(x),UM(1:d1),opt_fsolve");
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [(1/tau_max*dMDM_RE)*[KM;UM];GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];");
+                else
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"KM=[]; "); 
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];");  
+                end
+               
+
             %-_-_-_-_-_-_%
             
         else %if the system is an ODE one, write every equation
             for i=1:dim
-                  
                   fprintf(fid_write,'%s\n',string_sys{i}); 
                   filecontent = [filecontent,  sprintf('%s\n',string_sys{i})];
             end
@@ -542,11 +542,8 @@ while feof(fid_read)==0  %qui
     if ~isempty(findstr(matches,'handles'))
         if(gds.sys_type=="DDE") %if the system is a DDE one, write the follwing init function
             %-_-_-_-_-_-_%
-            fprintf(fid_write,'\n%s\n',"function state_eq=init(M,xeq,yeq)");         
-            filecontent = [filecontent,  sprintf('\n%s\n',"function state_eq=init(M,xeq,yeq)")];
-            fprintf(fid_write,'%s\n',"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];"); 
-            filecontent = [filecontent,  sprintf('%s\n',"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];")];
-           
+            filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"function state_eq=init(M,xeq,yeq)");
+            filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];");           
             %-_-_-_-_-_-_%
         else
             [dim,x]=size(string_init);
@@ -624,18 +621,10 @@ end
 %functions in the file
 if(strcmp(gds.sys_type,"DDE"))
     
-    
-    fprintf(fid_write,'\n%s\n','function out = UnitQuadweightsFun');
-    fprintf(fid_write,'%s',strcat('out=',RowVett2Str(UnitQuadweights)));
-    
-    fprintf(fid_write,'\n%s\n','function out = UnitNodesFun');
-    fprintf(fid_write,'%s',strcat('out=',ColVett2Str(UnitNodes)));
-    
-    filecontent = [filecontent, sprintf('\n%s\n','function out = UnitQuadweightsFun')];
-    filecontent = [filecontent, sprintf('%s',strcat('out=',RowVett2Str(UnitQuadweights)))];
-    filecontent = [filecontent, sprintf('\n%s\n','function out = UnitNodesFun')];
-    filecontent = [filecontent, sprintf('%s',strcat('out=',ColVett2Str(UnitNodes)))];
-    
+    filecontent = write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitQuadweightsFun'); 
+    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',RowVett2Str(UnitQuadweights))); 
+    filecontent = write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitNodesFun'); 
+    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',ColVett2Str(UnitNodes)));   
     
     mat="[";
     [rows , ~]=size(UnitDD);
@@ -643,18 +632,12 @@ if(strcmp(gds.sys_type,"DDE"))
         mat=mat+RowVett2StrAux(UnitDD(i,:))+";";
     end
     mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];";
-    fprintf(fid_write,'\n%s\n','function out = UnitDDFun');
-    fprintf(fid_write,'%s',strcat('out=',mat));
-    filecontent = [filecontent, sprintf('\n%s\n','function out = UnitDDFun')];
-    filecontent = [filecontent, sprintf('%s',strcat('out=',mat))];
     
-   
-   
-     
-    fprintf(fid_write,'\n%s\n','function out = BaryWeightsFun');
-    fprintf(fid_write,'%s\n\n',strcat('out=',RowVett2Str(BaryWeights)));
-    filecontent = [filecontent, sprintf('\n%s\n','function out = BaryWeightsFun')];
-    filecontent = [filecontent, sprintf('%s\n\n',strcat('out=',RowVett2Str(BaryWeights)))];
+    filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitDDFun');
+    filecontent=write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',mat));
+       
+    filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = BaryWeightsFun');
+    filecontent=write_M_and_File_Content(fid_write,'%s\n\n',filecontent,strcat('out=',RowVett2Str(BaryWeights)));
       
 end
 %-_-_-_-_-_-_%
@@ -1521,6 +1504,10 @@ for t=1:dim
 end
 %---------------------------------------------------------------------------
 function [temp,eq] = parse_input(string,type)
+%-_-_-_-_-_-_%
+global gds %later used to check sys_type
+%-_-_-_-_-_-_%
+
 % can't parse empty strings, so first remove them here
 j=1;
 cleaned_string={};
@@ -1536,25 +1523,34 @@ dim = size(string,1);
 vars = size(type,2);
 temp='';eq='';
 p=1;s=1;
-for j=1:dim
+for j=1:dim %per ogni eq valore preso dall'entry appropriata
     k=[];  
-    for i=1:length(type)
+    for i=1:length(type) %coordinate prese dall'entry apposita (hanno ')
         teststring = string{j};
         if exist('strtrim','builtin')
             coordinate = strtrim(type{i});
         else
             coordinate = deblank(type{i});
         end
+        %-_-_-_-_-_-_%
+        if(gds.sys_type=="DDE")
+            coordinate=coordinate(1:end-1); %remove '
+        end
+        %-_-_-_-_-_-_%
         match = strcat('\<',coordinate,'\>');
-        pos = regexp(teststring,match);
+        pos = regexp(teststring,match); %non splitta sx e dx = 
+        % se ha trovato cor_xyz' ed è la prima posizione (in prima
+        % posizione) vedi se è l'ordine corretto
         if ~isempty(pos) && pos(1)==1
            k = 1;
-           tmpv = type{1};
+           tmpv = type{1}; %type di i??
+           %se la posizione della coordinata ed eq non coincide e SE è ' 
            if (vars-i ~= dim-j) && (tmpv(end) == '''')
                error('Equations are in the wrong order, compared to the coordinates.');
            end
         end
     end
+    
     if (findstr(string{j},'=')&(isempty(k)))
         temp{p,1} = string{j};
         h = 1; c = 0; p = p+1;
@@ -2219,7 +2215,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
     %getting the rhs of the current equation considered
     [eq,~]=split(eqIn,"=");
     eq=eq(2);
-    
+   
     %getting the string itself
     eq=cell2mat(eq);
     
@@ -2262,7 +2258,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim)
                 %the function that will compute its value (e.g y[t-2*TAU]
                 %-> interpoly(-2*TAU,...))
                 delayfound=extractBetween(eq,inizio(l),fine(l));
-                eq=strrep(eq,delayfound,approx); %modifica
+                eq=strrep(eq,delayfound,approx); 
             end
         end
         
@@ -2426,7 +2422,7 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
             [inizio1,fine1]=regexp(integral,integralPartsRegExp);
 
             inizio1=cell2mat(inizio1);
-            fine1=cell2mat(fine1)
+            fine1=cell2mat(fine1);
             
             %getting the various parts (the first and second extreme of intregration
             %and the integration variable)
@@ -2624,5 +2620,36 @@ function eqIn = parseIntegral(eqIn,nodes)
         
     end
     
+
+%function that given an equation returns true iff the LHS doesn't contain
+%the derivative of a coordinate (i.e. if the equation is RE)
+%eq: equation of the system with the substituted coordinates
+function answ=isRE(eq)
+    answ=true;
+    [eqComponents,~]=strsplit(eq,"=");
+    if(contains(eqComponents{1},"'"))
+        answ=false;
+    end
+    
+%function that given the equations in the system returns the number of the
+%renewal equations in the system
+%equations: the system of equations with the substituted coordinates
+function no=getREno(equations)
+    global gds;
+    no=0
+    %for each equation in the system check if is an RE
+    for i=1:gds.dim
+       %the equation considered 
+       disp("current="+i);
+       eq=equations(i,:) 
+       if(isRE(eq))
+           no=no+1; %no++
+       end
+    end
+
+function fileContent = write_M_and_File_Content(fid_write,format,fileContent,content) 
+    fprintf(fid_write,format,content);   
+    fileContent = [fileContent,  sprintf(format,content)];
+
 
 %-_-_-_-_-_-_%
