@@ -475,42 +475,41 @@ while feof(fid_read)==0  %qui
                     
                 %if the system has only one equation, write the rhs of GM
                 %without []
-                if(gds.dim==1) 
-                    equation=(equations(1,:));
-                    if(isRE(equation))
-                       disp("RE found -> eq n. 1");
-                    end
-                    equation=parseDDE(equation,cor,extractBefore(t,strlength(t)),gds.dim);
-                    equation=parseIntegral(equation,UnitNodes);                    
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("GM = @(x)", strcat (equation,";")));                   
-                   
-                else %the system has more equations, we need to use []
-                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,"GM = @(x) [");  
-                    %for each equation except the last, parse it and write
-                    %it in the rhs of GM, concatenated with a ;
-                    for eqNo=1:dim-1
-                        eq=equations(eqNo,:);
-                        if(isRE(eq))
-                            disp("RE found -> eq n. "+eqNo);
-                        end
-                        equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
-                        equation=parseIntegral(equation,UnitNodes);
-                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(equation,";"));  
-                    end
-                    
-                    %parsing the last equation and closing the bracket "];"
-                    eqNo=dim;
-                   
+                
+                endingGM="]";
+                openingGM="[";
+                
+                if(gds.dim==1)
+                    endingGM="";
+                    openingGM="";
+                end
+                
+                filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat("GM = @(x) ",openingGM));  
+                %for each equation except the last, parse it and write
+                %it in the rhs of GM, concatenated with a ;
+                for eqNo=1:dim-1
                     eq=equations(eqNo,:);
                     if(isRE(eq))
                         disp("RE found -> eq n. "+eqNo);
                     end
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
                     equation=parseIntegral(equation,UnitNodes);
-                    
-                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"];");  
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(equation,";"));  
                 end
+
+                %parsing the last equation and closing the bracket "];"
+                eqNo=dim;
+
+                eq=equations(eqNo,:);
+                if(isRE(eq))
+                    disp("RE found -> eq n. "+eqNo);
+                end
+                equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
+                equation=parseIntegral(equation,UnitNodes);
+
+                filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(endingGM,";"));  
+                
                 
                 %write in the file (fun_eval)
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));");  
