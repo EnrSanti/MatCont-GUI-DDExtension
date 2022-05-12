@@ -469,7 +469,10 @@ while feof(fid_read)==0  %qui
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state((d1*M+1):(d1*M+d2));");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state((d1*M+d2+1):end);"); %end _> (d2*(M+1)                   
-                
+                if(REno>0)
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:M*d1);");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state");
+                end
                 %calculate the following arrays
                 [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
                     
@@ -485,14 +488,16 @@ while feof(fid_read)==0  %qui
                 end
                 
                 filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat("GM = ",openingGM));  
+                splittedCoords=split(cor,",");
+                REcoords=splittedCoords(1:REno);
+                DDEcoords=splittedCoords(REno+1:end);
                 
-                %for each equation except the last, parse it and write
-                %it in the rhs of GM, concatenated with a ;
+                %fa le dde
                 if(DDEno>0)
                     for eqNo=(REno+1):dim-1
                         eq=equations(eqNo,:);
-                        equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REno);
-                        equation=parseIntegral(equation,UnitNodes);
+                        equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
+                        equation=parseIntegral(equation,fid_write,filecontent);
                         filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(equation,";"));  
                     end
 
@@ -500,25 +505,20 @@ while feof(fid_read)==0  %qui
                     eqNo=dim;
 
                     eq=equations(eqNo,:);
-                    equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REno);
-                    equation=parseIntegral(equation,UnitNodes);
+                    equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
+                    equation=parseIntegral(equation,fid_write,filecontent);
 
                     filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(endingGM,";"));  
+                    %fine dde
                 end
-                
                 %write in the file (fun_eval)
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));");  
                     
                 %if the system contains also Renewal equations write the
                 %expression for KM, dMDM_RE, UM and the proper dy/dt else
                 %KM=[], and dy/dt without the renewal part
-                if(REno>0)
-                    
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:M*d1);");
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state");
-                   
-              
+                if(REno>0)             
                     endingFM="]";
                     openingFM="[";
 
@@ -529,24 +529,22 @@ while feof(fid_read)==0  %qui
                     
                     FM=openingFM;
                     
-                    splittedCoords=split(cor,",");
-                    DDEcoords=splittedCoords(1:REno);
-                    REcoords=splittedCoords(REno+1:end);
                     %for each RE equaton
                     for eqNo=1:REno-1
-                        
                         eq=equations(eqNo,:); %eq ha lhs=rhs
-                        [lhs,eq]=getComponents(parseREDot(eq));
-                        FM=FM+parseRE(eq,UnitNodes,REcoords,DDEcoords)+";"+char(10);
-                         
+                        equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
+                        equation=parseIntegral(equation,fid_write,filecontent)
+                        FM=FM+equation+";"+char(10);                        
                     end
 
                     %parsing the last equation and closing the eventual bracket "];"
                     eqNo=REno;
 
+                
                     eq=equations(eqNo,:); %eq ha lhs=rhs
-                    [lhs,eq]=getComponents(parseREDot(eq));
-                    FM=FM+parseRE(eq,UnitNodes,REcoords,DDEcoords)+"]";
+                    equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
+                    equation=parseIntegral(equation,fid_write,filecontent)
+                    FM=FM+equation+"]";
                     
                     REstring=strcat("KM = derState - "+ FM + "*ones(M,1);");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,REstring);
@@ -2239,7 +2237,10 @@ function strRow = RowVett2StrAux(vett)
 %tempi: a string containing the time variables, divided by "," (e.g
 %"t1,t2")
 %dim: integer, the number of coordinates in the system
-function eq = parseDDE(eqIn,coords,tempi,dim,REno)
+function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
+
+    REno=length(REcoords);
+    DDEno=length(DDEcoords);
     %getting the coordinates (x,y...)
     [coords,~]=split(coords,",");
     %getting the times
@@ -2288,8 +2289,15 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REno)
                 %expression, anyway, creating the string to substitute to
                 %x[t-...] which corresponds to the call to the
                 %interpolation function
-                approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i-REno)+");VM("+(i-REno)+":d2:end)],BaryWeights)";
-               
+                
+                %da portare fuori dal ciclo
+                approx="";
+                if(i>REno)%%dde coord
+                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i-REno)+");VM("+(i-REno)+":d2:end)],BaryWeights)";
+                else%re coord
+                    %modifica qui
+                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno)+":d1:end)],BaryWeights)";
+                end
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]
                 %-> interpoly(-2*TAU,...))
@@ -2424,7 +2432,6 @@ function delays= checkIntegralVars(delays,eqsIn,dim,tempi)
 %"t1,t2")
 function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
 
-
     delaysToAdd=[""];
     %initializing empty string array
     integralVars=[""];
@@ -2501,8 +2508,8 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
 %function that given a diff equation, gets the different parameters from an equation containing an
 %integral, format: \int_{a}^{b}{expression}{integration variable} and
 %returns the actual equation to insert in the .m file
-function eqIn = parseIntegral(eqIn,nodes) 
-    
+function eqIn = parseIntegral(eqIn,fid_write,filecontent) 
+    global gds;
     expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
     %getting the arrays of the beginning and ending positions of each match found with the reg exp 
@@ -2538,7 +2545,8 @@ function eqIn = parseIntegral(eqIn,nodes)
         
         %creating the string *(b-(a)) to not recompute it every time
         b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
-       
+        
+        
         %checking if funzione begins with the intergration varaible
         %if(funzione inizia con var, sostituisci var con new_
         if(length(cell2mat(regexp(extractBetween(funzione,1,length(diff{1})),diff)))>0)
@@ -2642,17 +2650,14 @@ function eqIn = parseIntegral(eqIn,nodes)
         
         
         
-        fCap="[";
-        %for each node (m+1)-1,create the proper string to put in the array
-        for kk=1:length(nodes)-1
-            fCap=fCap+strrep(funzione,diff,(nodes(kk)+b_a+"+"+b))+","+newline;
-        end
-        fCap=fCap+strrep(funzione,diff,(nodes(end)+b_a+"+"+b))+"]";
+        %scrivi su file "[fCap,wCap]=fclencurt(M+1,"+a+","+b+");
+        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt(M+1,"+a+","+b+");");
+        
 
-       
+        fCap=strrep(funzione,diff,"thetaCap");
         
         %susbstituing the intergral with dot(f^,weights)*(b-a)
-        eqIn=strrep(eqIn,integral,"dot("+fCap+",UnitQuadweights)"+b_a);
+        eqIn=strrep(eqIn,integral,"dot("+fCap+",wCap)"+b_a);
         
     end
     
@@ -2696,9 +2701,15 @@ function [lhs,rhs]=getComponents(eqIn)
     eqIn=split(eqIn,"=");
     lhs=eqIn(1);
     rhs=eqIn(2);
+    
+    
+    
+    
 %ritorno fm
-function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
 
+
+function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
+    global gds;
     expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
     %getting the arrays of the beginning and ending positions of each match found with the reg exp 
@@ -2713,7 +2724,8 @@ function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
     
     %foreach match (i.e. for each integral) (loop "backwards")
     for l=matches:-1:1  
-        substituteString="quad(";
+        
+        substituteString="dot(";
         
         integral=extractBetween(eqIn,inizio(l)+5,fine(l));
         [inizio1,fine1]=regexp(integral,expression);
@@ -2721,7 +2733,8 @@ function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
         
         a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
         b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
-        substituteString=substituteString+a+","+b+",";
+        
+        [nodes,weights]=fclencurt(gds.no_discretizationPoints+1,a,b);
         
         funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
         funzione=funzione{1};
@@ -2730,16 +2743,28 @@ function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
         shiftNodes="+tau_max)/tau_max*("+b+"-"+a+")+"+a;
         
         %for each node (m+1)-1,create the proper string to put in the array
-        
-        substituteToDelays="(commonFunctions.interpoly(-tau_max,(UnitNodes"+shiftNodes+"),UnitDD*[0;UM],BaryWeights)";
-        %replace delays
-        substituteString=substituteString+regexprep(funzione,coord+"\[.*\W[^\]]*\]",substituteToDelays)+")";
-        %replace ...f(diffVar)
-        substituteString=regexprep(substituteString,"(?<=\W)"+diff+"(?=\W)","(UnitNodes"+shiftNodes);
-        
+        for i=1:length(DDEcoords)
+            %vedi substituteToDelays
+            substituteToDelays="commonFunctions.interpoly(-tau_max,(UnitNodes"+shiftNodes+",UnitDD*[0;UM("+i+":d1:end)],BaryWeights)";
+            %replace delays
+            substituteString=regexprep(substituteString,DDEcoords{i}+"\[.*\W[^\]]*\]",substituteToDelays);
+            %replace ...f(diffVar)
+            substituteString=regexprep(substituteString,"(?<=\W)"+DDEcoords{i}+"(?=\W)","yM("+(i-length(REcoords)));
+        end
+        substituteString=substituteString+funzione;
+        for i=1:length(REcoords)
+            substituteToDelays="commonFunctions.interpoly(-tau_max,(UnitNodes"+shiftNodes+",UnitDD*[0;UM("+i+":d1:end)],BaryWeights)";
+            %replace delays
+            substituteString=regexprep(substituteString,REcoords{i}+"\[.*\W[^\]]*\]",substituteToDelays);
+            %replace ...f(diffVar)
+            %vedi prossima sostituzione
+            substituteString=regexprep(substituteString,"(?<=\W)"+REcoords{i}+"(?=\W)","(UnitNodes"+shiftNodes);
+        end
+              
         
         %ok now we have the proper string representing the
         %integral,substitute the integral
+        substituteString=substituteString+","+a+","+b+")";
         eqIn=strrep(eqIn,extractBetween(eqIn,inizio(l),fine(l)),substituteString);
 
     end
