@@ -529,12 +529,15 @@ while feof(fid_read)==0  %qui
                     
                     FM=openingFM;
                     
+                    splittedCoords=split(cor,",");
+                    DDEcoords=splittedCoords(1:REno);
+                    REcoords=splittedCoords(REno+1:end);
                     %for each RE equaton
                     for eqNo=1:REno-1
                         
                         eq=equations(eqNo,:); %eq ha lhs=rhs
                         [lhs,eq]=getComponents(parseREDot(eq));
-                        FM=FM+parseRE(eq,UnitNodes,lhs,t)+";";
+                        FM=FM+parseRE(eq,UnitNodes,REcoords,DDEcoords)+";"+char(10);
                          
                     end
 
@@ -543,7 +546,7 @@ while feof(fid_read)==0  %qui
 
                     eq=equations(eqNo,:); %eq ha lhs=rhs
                     [lhs,eq]=getComponents(parseREDot(eq));
-                    FM=FM+parseRE(eq,UnitNodes,lhs,t)+"];";
+                    FM=FM+parseRE(eq,UnitNodes,REcoords,DDEcoords)+"]";
                     
                     REstring=strcat("KM = derState - "+ FM + "*ones(M,1);");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,REstring);
@@ -2694,7 +2697,7 @@ function [lhs,rhs]=getComponents(eqIn)
     lhs=eqIn(1);
     rhs=eqIn(2);
 %ritorno fm
-function eqIn=parseRE(eqIn,unitNodes,coord,time) %eq no è da elimare
+function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
 
     expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
@@ -2727,18 +2730,17 @@ function eqIn=parseRE(eqIn,unitNodes,coord,time) %eq no è da elimare
         shiftNodes="+tau_max)/tau_max*("+b+"-"+a+")+"+a;
         
         %for each node (m+1)-1,create the proper string to put in the array
-        %for kk=1:length(unitNodes)-1
-            substituteToDelays="(interp(UnitDD*[0;UM],(UnitNodes("+kk+")"+shiftNodes+"))";
-            %replace delays
-            substituteString=substituteString+regexprep(funzione,coord+"\[.*\W[^\]]*\]",substituteToDelays)+","+newline;
-            %replace ...f(diffVar)
-            substituteString=regexprep(substituteString,"(?<=\W)"+diff+"(?=\W)","(UnitNodes("+kk+")"+shiftNodes);
         
-            substituteToDelays="(interp(UnitDD*[0;UM],(UnitNodes("+(length(unitNodes))+")"+shiftNodes+"))";
+        substituteToDelays="(commonFunctions.interpoly(-tau_max,(UnitNodes"+shiftNodes+"),UnitDD*[0;UM],BaryWeights)";
+        %replace delays
         substituteString=substituteString+regexprep(funzione,coord+"\[.*\W[^\]]*\]",substituteToDelays)+")";
-        substituteString=regexprep(substituteString,"(?<=\W)"+diff+"(?=\W)","(UnitNodes("+(length(unitNodes))+")"+shiftNodes);
+        %replace ...f(diffVar)
+        substituteString=regexprep(substituteString,"(?<=\W)"+diff+"(?=\W)","(UnitNodes"+shiftNodes);
         
-        %ok now we have the proper string representing the integral
+        
+        %ok now we have the proper string representing the
+        %integral,substitute the integral
         eqIn=strrep(eqIn,extractBetween(eqIn,inizio(l),fine(l)),substituteString);
+
     end
 %-_-_-_-_-_-_%
