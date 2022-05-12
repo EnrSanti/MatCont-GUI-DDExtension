@@ -82,54 +82,6 @@ classdef commonFunctions
         end
         
         
-        
-        %da eliminare, solo per test
-        function eqIn = substituteIntegralVars(eqIn)
-        expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
-
-        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-        [inizio,fine]=regexp(eqIn,expression);
-
-        %getting the value of how many matches we have found with the reg exp 
-        [~,matches]=size(inizio); %strings begin from 1...
-
-        %foreach match (i.e. for each integral) (from the last)
-        for l=matches:-1:1
-            %setting the parameters and the regular expression to extract the
-            %contents between {}
-            integral=extractBetween(eqIn,inizio(l)+5,fine(l));
-            expression="{[^}]+}";
-
-            %inizio1 and fine1 mark the beginning and the end of each part of
-            %the integral, their len is 4 (a,b,function to integrate, delta)
-            [inizio1,fine1]=regexp(integral,expression);
-
-
-            %getting the various parts
-            funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
-            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
-
-            %getting the whole integral (i.e. \int...{dx})
-            integral=(extractBetween(eqIn,inizio(l),fine(l)));
-
-
-            %find in the function to integrate all the instances of the
-            %variable 
-            [inizio2,fine2]=regexp(funzione,"\W"+diff+"\W");
-            substitute=integral_var_+diff;
-            [~,matches2]=size(inizio2); %strings begin from 1...
-
-            %foreach match (i.e. for each integral)
-            for ll=matches2:-1:1
-                funzione=strrep(funzione,extractBetween(funzione,inizio2(ll),fine2(ll)),substitute);
-                %susbstituing the intergral with dot(f^,weights)*(b-a)
-            end
-
-        end
-        end
-        
-        
-        
         %CITE:
         %Benjamin Bernard (2022). Binary search for closest value in an array (https://www.mathworks.com/matlabcentral/fileexchange/37915-binary-search-for-closest-value-in-an-array), MATLAB Central File Exchange. Retrieved April 11, 2022. 
         function [v, inf] = closest_value(arr, val)
@@ -163,31 +115,6 @@ classdef commonFunctions
         end  
         v = arr(inf);
         end
-        
-        %get the different parameters from an equation containing an
-        %integral, format: \int_{a}^{b}{expression}{integration variable}
-        function out = getIntegral(eqIn)
-            out="";
-            expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
-
-            %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-            [inizio,fine]=regexp(eqIn,expression);
-
-            %getting the value of how many matches we have found with the reg exp 
-            [~,matches]=size(inizio); %strings begin from 1...
-
-            %foreach match
-            for l=1:matches
-                integral=extractBetween(eqIn,inizio(l)+5,fine(l));
-                expression="{[^}]+}";
-                [inizio1,fine1]=regexp(integral,expression);
-                [~,matches1]=size(inizio1); %strings begin from 1...
-                for kk=1:matches1
-                    disp(extractBetween(integral,inizio1(kk)+1,fine1(kk)-1));
-                end
-                disp("Nuovo");
-                disp(extractBetween(eqIn,inizio(l),fine(l)));
-            end
-        end
+           
     end
 end
