@@ -440,6 +440,7 @@ while feof(fid_read)==0  %qui
               
                 %write in the file all the variables needed in the fun_eval
                 %method
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt(M+1,0,1);");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitQuadweights=UnitQuadweightsFun();");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitNodes=UnitNodesFun();");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitDD=UnitDDFun();");
@@ -546,7 +547,7 @@ while feof(fid_read)==0  %qui
                     equation=parseIntegral(equation,fid_write,filecontent)
                     FM=FM+equation+"]";
                     
-                    REstring=strcat("KM = derState - "+ FM + "*ones(M,1);");
+                    REstring=strcat("KM = derState - kron("+ FM + ",ones(M,1));");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,REstring);
                     
                     %equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
@@ -2296,7 +2297,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
                     approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i-REno)+");VM("+(i-REno)+":d2:end)],BaryWeights)";
                 else%re coord
                     %modifica qui
-                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno)+":d1:end)],BaryWeights)";
+                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno+1)+":d1:end)],BaryWeights)";
                 end
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]
@@ -2650,11 +2651,10 @@ function eqIn = parseIntegral(eqIn,fid_write,filecontent)
         
         
         
-        %scrivi su file "[fCap,wCap]=fclencurt(M+1,"+a+","+b+");
-        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt(M+1,"+a+","+b+");");
+        
         
 
-        fCap=strrep(funzione,diff,"thetaCap");
+        fCap=strrep(funzione,diff,"thetaCap"+b_a+"+"+a);
         
         %susbstituing the intergral with dot(f^,weights)*(b-a)
         eqIn=strrep(eqIn,integral,"dot("+fCap+",wCap)"+b_a);
@@ -2688,84 +2688,22 @@ function no=getREno(equations)
        end
     end
 
+%function that given the file identificator of the file (opened) to write,
+%the format, the current content of the file and what to write, wites
+%content on the file and updates fileContent
+%fid_write: the file identificator of the openend file
+%format: a string representing the format of how to write the string on the
+%file
+%fileContent: a string containing the current content of the file, updated
+%after the file has been written
+%content: a string containing the new content to write on the file
 function fileContent = write_M_and_File_Content(fid_write,format,fileContent,content) 
     fprintf(fid_write,format,content);   
     fileContent = [fileContent,  sprintf(format,content)];
-    
+%a function that given an equation (LHS=RHS) substitutes all the products,
+%exponents and divisions with the respetive component wise operation
 function eqIn = parseREDot(eqIn) 
     eqIn=strrep(eqIn,"*",".*");
     eqIn=regexprep(eqIn,"\^(?!{)",".^"); %non strrep, the integral has {}^{}...
     eqIn=strrep(eqIn,"/","./");
-
-function [lhs,rhs]=getComponents(eqIn)
-    eqIn=split(eqIn,"=");
-    lhs=eqIn(1);
-    rhs=eqIn(2);
-    
-    
-    
-    
-%ritorno fm
-
-
-function eqIn=parseRE(eqIn,unitNodes,REcoords,DDEcoords) %eq no è da elimare
-    global gds;
-    expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
-
-    %getting the arrays of the beginning and ending positions of each match found with the reg exp 
-    [inizio,fine]=regexp(eqIn,expression);
-
-    %getting the value of how many matches we have found with the reg exp 
-    [~,matches]=size(inizio); %strings begin from 1...
-
-    %the expression to get the different integral components    
-    expression="{[^}]+}";
-    
-    
-    %foreach match (i.e. for each integral) (loop "backwards")
-    for l=matches:-1:1  
-        
-        substituteString="dot(";
-        
-        integral=extractBetween(eqIn,inizio(l)+5,fine(l));
-        [inizio1,fine1]=regexp(integral,expression);
-        
-        
-        a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
-        b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
-        
-        [nodes,weights]=fclencurt(gds.no_discretizationPoints+1,a,b);
-        
-        funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
-        funzione=funzione{1};
-        diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
-        
-        shiftNodes="+tau_max)/tau_max*("+b+"-"+a+")+"+a;
-        
-        %for each node (m+1)-1,create the proper string to put in the array
-        for i=1:length(DDEcoords)
-            %vedi substituteToDelays
-            substituteToDelays="commonFunctions.interpoly(-tau_max,(UnitNodes"+shiftNodes+",UnitDD*[0;UM("+i+":d1:end)],BaryWeights)";
-            %replace delays
-            substituteString=regexprep(substituteString,DDEcoords{i}+"\[.*\W[^\]]*\]",substituteToDelays);
-            %replace ...f(diffVar)
-            substituteString=regexprep(substituteString,"(?<=\W)"+DDEcoords{i}+"(?=\W)","yM("+(i-length(REcoords)));
-        end
-        substituteString=substituteString+funzione;
-        for i=1:length(REcoords)
-            substituteToDelays="commonFunctions.interpoly(-tau_max,(UnitNodes"+shiftNodes+",UnitDD*[0;UM("+i+":d1:end)],BaryWeights)";
-            %replace delays
-            substituteString=regexprep(substituteString,REcoords{i}+"\[.*\W[^\]]*\]",substituteToDelays);
-            %replace ...f(diffVar)
-            %vedi prossima sostituzione
-            substituteString=regexprep(substituteString,"(?<=\W)"+REcoords{i}+"(?=\W)","(UnitNodes"+shiftNodes);
-        end
-              
-        
-        %ok now we have the proper string representing the
-        %integral,substitute the integral
-        substituteString=substituteString+","+a+","+b+")";
-        eqIn=strrep(eqIn,extractBetween(eqIn,inizio(l),fine(l)),substituteString);
-
-    end
 %-_-_-_-_-_-_%

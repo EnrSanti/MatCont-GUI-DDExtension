@@ -2303,7 +2303,8 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
                 %the function that will compute its value (e.g y[t-2*TAU]
                 %-> interpoly(-2*TAU,...))
                 delayfound=extractBetween(eq,inizio(l),fine(l));
-                eq=strrep(eq,delayfound,approx); 
+                eq = convertStringsToChars(strcat(eq(1:inizio(l) - 1),strcat( approx, eq(inizio(l)+(fine(l)+1-inizio(l)):end))));
+                %eq=strrep(eq,delayfound,approx); 
             end
         end
         
@@ -2688,25 +2689,22 @@ function no=getREno(equations)
        end
     end
 
+%function that given the file identificator of the file (opened) to write,
+%the format, the current content of the file and what to write, wites
+%content on the file and updates fileContent
+%fid_write: the file identificator of the openend file
+%format: a string representing the format of how to write the string on the
+%file
+%fileContent: a string containing the current content of the file, updated
+%after the file has been written
+%content: a string containing the new content to write on the file
 function fileContent = write_M_and_File_Content(fid_write,format,fileContent,content) 
     fprintf(fid_write,format,content);   
     fileContent = [fileContent,  sprintf(format,content)];
-    
+%a function that given an equation (LHS=RHS) substitutes all the products,
+%exponents and divisions with the respetive component wise operation
 function eqIn = parseREDot(eqIn) 
     eqIn=strrep(eqIn,"*",".*");
     eqIn=regexprep(eqIn,"\^(?!{)",".^"); %non strrep, the integral has {}^{}...
     eqIn=strrep(eqIn,"/","./");
-
-function [lhs,rhs]=getComponents(eqIn)
-    eqIn=split(eqIn,"=");
-    lhs=eqIn(1);
-    rhs=eqIn(2);
-    
-    
-    
-    
-%ritorno fm
-
-
-
 %-_-_-_-_-_-_%

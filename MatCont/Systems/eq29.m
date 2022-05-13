@@ -14,6 +14,7 @@ out{9} = [];
 
 function dydt = fun_eval (t,state,par_TAU)
 M=10;
+[thetaCap,wCap]=fclencurt(M+1,0,1);
 UnitQuadweights=UnitQuadweightsFun();
 UnitNodes=UnitNodesFun();
 UnitDD=UnitDDFun();
@@ -23,14 +24,13 @@ d2=1;
 delayFunctions=[-par_TAU];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
-VM=state((d1*M+d2+1):(d2*(M+1)));
-GM = @(x)-sin(commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights));
-KM=[]; 
+VM=state((d1*M+d2+1):end);
+GM = -sin(commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights));
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
+KM=[]; 
 dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
-
 function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 
