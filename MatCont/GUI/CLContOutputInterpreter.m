@@ -123,10 +123,10 @@ classdef CLContOutputInterpreter
                 
                 
             end
-          global gds;
-          if(gds.sys_type=="DDE")
+            
+          if(session.settings.fields.system.sys_type=="DDE")
                rep=ntst*ncol;
-               m=gds.no_discretizationPoints;
+               m=session.settings.fields.system.no_discretizationPoints;
                for index2=1:(rep)
                   omap.x(index2*(m+1)*dim+(1:dim)) = coordinates;
                end
@@ -140,8 +140,8 @@ classdef CLContOutputInterpreter
           %parameters doesn't start at  dim*(ntst*ncol+1) + 1, but the
           %number of equations discretizing the system has to be taken into
           %account
-          if(gds.sys_type=="DDE")
-                index = dim*(ntst*ncol+1)*(gds.no_discretizationPoints+1) + 1;
+          if(session.settings.fields.system.sys_type=="DDE")
+                index = dim*(ntst*ncol+1)*(session.settings.fields.system.no_discretizationPoints+1) + 1;
                 disp("debug:dde no eccezione");
            else
                index = dim*(ntst*ncol+1) + 1;

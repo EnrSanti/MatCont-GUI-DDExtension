@@ -30,7 +30,7 @@ VM=state((d1*M+d2+1):end);
 GM = par_beta*commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)/(1+commonFunctions.interpoly(-par_TAU,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)^par_n)-par_gamma*yM(1);
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
 KM=[]; 
-dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
+dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)

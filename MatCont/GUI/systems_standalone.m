@@ -560,8 +560,7 @@ while feof(fid_read)==0  %qui
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [KM;GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");
                 
                 else
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"KM=[]; "); 
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];");  
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");  
                 end
                
 
