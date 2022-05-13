@@ -481,7 +481,7 @@ while feof(fid_read)==0  %qui
                 [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
                 
                 splittedCoords=split(cor,",");
-                DDEcoords=splittedCoords(1:DDEno);
+                DDEcoords=splittedCoords(length(string_sys)+1:DDEno);
                 REcoords=splittedCoords(DDEno+1:end);
                 
                 for temporanee=1:length(string_sys)
@@ -542,7 +542,7 @@ while feof(fid_read)==0  %qui
                     FM=openingFM;
                     
                     %for each RE equaton
-                    for eqNo=length(string_sys)+DDEno+1:gds.dim+length(string_sys)-1
+                    for eqNo=length(string_sys)+DDEno+1:dim+length(string_sys)-1
                         eq=equations(eqNo,:); %eq ha lhs=rhs
                         equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
                         equation=parseIntegral(equation,fid_write,filecontent)
@@ -550,7 +550,7 @@ while feof(fid_read)==0  %qui
                     end
 
                     %parsing the last equation and closing the eventual bracket "];"
-                    eqNo=gds.dim+length(string_sys);
+                    eqNo=dim+length(string_sys);
 
                 
                     eq=equations(eqNo,:); %eq ha lhs=rhs
@@ -568,7 +568,7 @@ while feof(fid_read)==0  %qui
                     
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:d1*M);");
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;KM;(1/tau_max*dMDM_DDE)*[yM;VM]];");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [KM;GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");
                 
                 else
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");  
@@ -2303,11 +2303,11 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
                 
                 %da portare fuori dal ciclo
                 approx="";
-                if(~(i>DDEno))%%dde coord
-                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i)+");VM("+(i)+":d2:end)],BaryWeights)";
+                if(i>REno)%%dde coord
+                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i-REno)+");VM("+(i-REno)+":d2:end)],BaryWeights)";
                 else%re coord
                     %modifica qui
-                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno)+":d1:end)],BaryWeights)";
+                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno+1)+":d1:end)],BaryWeights)";
                 end
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]
@@ -2324,7 +2324,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
     
     %for each coordinate (without delay) substitute yM(i)
     for i=1:dim
-        eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",(i)),")")));
+        eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",(i-REno)),")")));
     end
     %var con yM(i) sostituite
     
