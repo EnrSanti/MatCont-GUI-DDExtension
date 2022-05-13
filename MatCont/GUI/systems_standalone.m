@@ -547,7 +547,7 @@ while feof(fid_read)==0  %qui
                     equation=parseIntegral(equation,fid_write,filecontent)
                     FM=FM+equation+"]";
                     
-                    REstring=strcat("KM = derState - "+ FM + "*ones(M,1);");
+                    REstring=strcat("KM = derState - kron("+ FM + ",ones(M,1));");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,REstring);
                     
                     %equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
@@ -2297,7 +2297,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
                     approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i-REno)+");VM("+(i-REno)+":d2:end)],BaryWeights)";
                 else%re coord
                     %modifica qui
-                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno)+":d1:end)],wCap)";
+                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno+1)+":d1:end)],BaryWeights)";
                 end
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]

@@ -29,8 +29,8 @@ UM=state(1:M*d1);
 derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state
 GM = par_bb*commonFunctions.interpoly(-2,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+par_aa+yM(1)                          ;
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
-KM = derState - [dot(3.*commonFunctions.interpoly(-thetaCap*(par_bb-(par_aa))+par_aa,tau_max*UnitNodes,[0;UM(0:d1:end)],wCap).^(1./2)+2.^3,wCap)*(par_bb-(par_aa));
-dot(commonFunctions.interpoly(-thetaCap*(-5-(-10))+-10,tau_max*UnitNodes,[0;UM(1:d1:end)],wCap).*2-1,wCap)*(-5-(-10))               ]*ones(M,1);
+KM = derState - kron([dot(3.*commonFunctions.interpoly(-thetaCap*(par_bb-(par_aa))+par_aa,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights).^(1./2)+2.^3,wCap)*(par_bb-(par_aa));
+dot(commonFunctions.interpoly(-thetaCap*(-5-(-10))+-10,tau_max*UnitNodes,[0;UM(2:d1:end)],BaryWeights).*2-1,wCap)*(-5-(-10))],ones(M,1));
 dydt= [KM;GM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
