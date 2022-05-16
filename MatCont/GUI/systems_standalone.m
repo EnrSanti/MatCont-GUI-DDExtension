@@ -457,7 +457,7 @@ while feof(fid_read)==0  %qui
                 %e.g. [t-2*TAU].. il massimo sarà 2TAU
                 
                 %getting the delay functions insered in the system
-                vettoreRitardi=getDelayFunctions(equations(length(string_sys)+1:gds.dim+length(string_sys),:),cor,extractBefore(t,strlength(t)),gds.dim);
+                vettoreRitardi=getDelayFunctions(equations,cor,extractBefore(t,strlength(t)),gds.dim+length(string_sys));
                 %il vettore è però da trasformare in str
                 
                 %making the array a string in order to save it in the file
@@ -485,7 +485,7 @@ while feof(fid_read)==0  %qui
                 REcoords=splittedCoords(DDEno+1:end);
                 
                 for temporanee=1:length(string_sys)
-                    nameTemp=split(string_sys{1},"=");
+                    nameTemp=split(string_sys{temporanee},"=");
                     nameTemp=nameTemp{1};
                     toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords),UnitNodes);
                     fprintf(fid_write,'%s\n',nameTemp+"="+toWrite);
@@ -501,11 +501,12 @@ while feof(fid_read)==0  %qui
                     openingGM="";
                 end
                 
-                filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat("GM = ",openingGM));  
-                
+               
+                writeGM="";
                 
                 %fa le dde
                 if(DDEno>0)
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat("GM = ",openingGM));  
                     for eqNo=(length(string_sys)+1):length(string_sys)+DDEno-1
                         eq=equations(eqNo,:);
                         equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
@@ -523,6 +524,7 @@ while feof(fid_read)==0  %qui
                     filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(endingGM,";"));  
                     %fine dde
+                    writeGM="GM;";
                 end
                 %write in the file (fun_eval)
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));");  
@@ -568,7 +570,7 @@ while feof(fid_read)==0  %qui
                     
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:d1*M);");
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;KM;(1/tau_max*dMDM_DDE)*[yM;VM]];");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= ["+writeGM+"KM;(1/tau_max*dMDM_DDE)*[yM;VM]];");
                 
                 else
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");  
@@ -2360,13 +2362,13 @@ function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
             eq=cell2mat(eq);
 
             %for each coordinate substitute
-            for i=1:dim
+            for i=1:length(coords)
                 %for each time var
                 for j=1:no_times
 
                     %if we have multiple time variables, extract one at the time
                     times(j)=string(tempi(j));
-                    for kk=1:dim
+                    for kk=1:length(coords)
                         %the regular expression of cor_xyz[t(i)...] not
                         %between {...}
                         exp2=coords(kk)+"\["+times(j)+"\W[^\]]*\]";

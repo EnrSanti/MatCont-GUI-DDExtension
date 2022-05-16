@@ -27,7 +27,10 @@ end
 %Same init as CL-version.
 init();
 addpath('GUI');
-
+%-_-_-_-_-_-_%
+%adding the folder containing the quadrature method to the path
+addpath('fclencurt');
+%-_-_-_-_-_-_%
 
 workingpath = pwd(); %save working dir
 

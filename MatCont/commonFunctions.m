@@ -54,7 +54,7 @@ classdef commonFunctions
         %%%%%%% ATTENZIONE ALLA DIMENSIONE d1 o d2
         function PP = interpoly(Theta,Nodes,Values,Weights)
             
-            
+            %{
             TOLL=eps;
             %getting the index and closest val to Theta
             [closest_val,ii]=commonFunctions.closest_value(Nodes,Theta);
@@ -64,7 +64,7 @@ classdef commonFunctions
                 PP=Values(ii);
                 return;
             end
-            
+            %} 
             n=size(Theta);
             numer=zeros(n);
             denom=zeros(n);
