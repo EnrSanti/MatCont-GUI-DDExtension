@@ -1,4 +1,4 @@
-function out = provaMINMAX
+function out = prova12
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -19,18 +19,21 @@ UnitQuadweights=UnitQuadweightsFun();
 UnitNodes=UnitNodesFun();
 UnitDD=UnitDDFun();
 BaryWeights=BaryWeightsFun();
-d1=1;
-d2=2;
-delayFunctions=[-3,par_a,par_b,par_a,par_b];
+d1=2;
+d2=3;
+delayFunctions=[-1,-2,-32,par_a,par_b,3*par_a,par_b];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
 VM=state((d1*M+d2+1):end);
 UM=state(1:M*d1);
 derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state
-GM = [yM(1)+2+dot(commonFunctions.interpoly(-thetaCap*(par_b-(par_a))+par_a,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+commonFunctions.interpoly(-3,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+yM(1),wCap)*(par_b-(par_a));
-3*yM(2)                                                             ];
+TMP2=commonFunctions.interpoly(-32,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1;
+GM = [3;
+commonFunctions.interpoly(-2,tau_max*UnitNodes,[yM(3);VM(3:d2:end)],BaryWeights)+commonFunctions.interpoly(-1,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights);
+yM(3)+3];
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
-KM = derState - kron([dot(commonFunctions.interpoly(-thetaCap*(par_b-(par_a))+par_a,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights),wCap)*(par_b-(par_a))],ones(M,1));
+KM = derState - kron([(dot(commonFunctions.interpoly(+thetaCap*(par_b-(par_a))+par_a,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights),wCap)*(par_b-(par_a))).^2+1;
+dot(commonFunctions.interpoly(+thetaCap*(par_b-(3.*par_a))+3.*par_a,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights)+commonFunctions.interpoly(+thetaCap*(par_b-(3.*par_a))+3.*par_a,tau_max*UnitNodes,[0;UM(2:d1:end)],BaryWeights)+TMP2,wCap)*(par_b-(3.*par_a))],ones(M,1));
 dydt= [GM;KM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
