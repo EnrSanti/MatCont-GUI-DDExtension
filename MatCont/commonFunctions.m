@@ -116,5 +116,31 @@ classdef commonFunctions
         v = arr(inf);
         end
            
+        function indexes = DDEIndexes(d1,d2,M)
+            range=1;
+            indexes="[";
+            if(d2==0)
+                indexes="[]";    
+                return;
+            end
+            for ind=1:M+1
+                indexes=indexes+range+":"+(range+d2-1)+",";
+                range=range+d1+d2;
+            end
+            indexes=indexes+"]";
+        end
+        function indexes = REIndexes(d1,d2,M)
+            range=1+d2;
+            indexes="[";
+            if(d1==0)
+                indexes="[]";    
+                return;
+            end
+            for ind=1:M+1
+                indexes=indexes+range+":"+(range+d1-1)+",";
+                range=range+d1+d2;
+            end
+            indexes=indexes+"]";
+        end
     end
-end
+    end

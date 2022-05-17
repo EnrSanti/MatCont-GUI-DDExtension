@@ -28,9 +28,6 @@ classdef CLSystem
         function Mpoints = getNo_discretizationPoints(obj)
            Mpoints = obj.no_discretizationPoints; 
         end
-        function re_no = getNo_RE(obj)
-           re_no = obj.no_RE; 
-        end
        
         %-_-_-_-_-_-_%
         function name = getName(obj)

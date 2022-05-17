@@ -440,7 +440,8 @@ while feof(fid_read)==0  %qui
                 REno=getREno(equations(length(string_sys)+1:end,:));
                 DDEno=gds.dim-REno;
             
-             
+                gds.no_RE=REno;
+                
                 %write in the m file the number of discretization points
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
               
@@ -475,9 +476,9 @@ while feof(fid_read)==0  %qui
                 maxT="abs(min(delayFunctions));"; % equivalente a max(abs())
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state((d1*M+1):(d1*M+d2));");
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state((d1*M+d2+1):end);"); %end _> (d2*(M+1)                   
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state(1:M*d2);"); %end _> (d2*(M+1)                   
                 if(REno>0)
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:M*d1);");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d1+1):end);");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state");
                 end
                 %calculate the following arrays
@@ -573,7 +574,7 @@ while feof(fid_read)==0  %qui
                     
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:d1*M);");
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= ["+writeGM+"KM;(1/tau_max*dMDM_DDE)*[yM;VM]];");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= ["+writeGM+"(1/tau_max*dMDM_DDE)*[yM;VM];KM];");
                 
                 else
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");  
@@ -1709,6 +1710,7 @@ global gds;
     %added fields
     gds.sys_type=''; 
     gds.no_discretizationPoints = 0;
+    gds.no_RE = 0;
     %-_-_-_-_-_-_%
     
     gds.coordinates = []; gds.parameters = [];

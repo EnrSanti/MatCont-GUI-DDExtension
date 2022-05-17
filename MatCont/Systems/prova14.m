@@ -1,4 +1,4 @@
-function out = prova12
+function out = prova14
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -12,7 +12,7 @@ out{9} = [];
 % --------------------------------------------------------------------------
 
 
-function dydt = fun_eval (t,state,par_a,par_b)
+function dydt = fun_eval (t,state,par_par)
 M=10;
 [thetaCap,wCap]=fclencurt(M+1,0,1);
 UnitQuadweights=UnitQuadweightsFun();
@@ -20,40 +20,37 @@ UnitNodes=UnitNodesFun();
 UnitDD=UnitDDFun();
 BaryWeights=BaryWeightsFun();
 d1=2;
-d2=3;
-delayFunctions=[-1,-2,-32,par_a,par_b,par_a,par_b,3*par_a,par_b];
+d2=1;
+delayFunctions=[-5,-4,1,5];
 tau_max=abs(min(delayFunctions));
 yM=state((d1*M+1):(d1*M+d2));
-VM=state(1:M*d2);
-UM=state((d2*M+d1+1):end);
+VM=state((d1*M+d2+1):end);
+UM=state(1:M*d1);
 derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP2=commonFunctions.interpoly(-32,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1;
-GM = [3                                                         ;
-commonFunctions.interpoly(-2,tau_max*UnitNodes,[yM(3);VM(3:d2:end)],BaryWeights)+commonFunctions.interpoly(-1,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights);
-dot(commonFunctions.interpoly(+thetaCap*(par_b-(par_a))+par_a,tau_max*UnitNodes,[yM(3);VM(3:d2:end)],BaryWeights),wCap)*(par_b-(par_a))];
+GM = yM(1)+1                                    ;
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
-KM = derState - kron([(dot(commonFunctions.interpoly(+thetaCap*(par_b-(par_a))+par_a,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights),wCap)*(par_b-(par_a))).^2+1;
-dot(commonFunctions.interpoly(+thetaCap*(par_b-(3.*par_a))+3.*par_a,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights)+commonFunctions.interpoly(+thetaCap*(par_b-(3.*par_a))+3.*par_a,tau_max*UnitNodes,[0;UM(2:d1:end)],BaryWeights)+TMP2,wCap)*(par_b-(3.*par_a))],ones(M,1));
-dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM];KM];
+KM = derState - kron([dot(commonFunctions.interpoly(+thetaCap*(-4-(-5))+-5,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights)+3,wCap)*(-4-(-5));
+dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,tau_max*UnitNodes,[0;UM(2:d1:end)],BaryWeights)+commonFunctions.interpoly(-thetaCap*(5-(1))+1,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights),wCap)*(5-(1))],ones(M,1));
+dydt= [GM;KM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 
 % --------------------------------------------------------------------------
-function jac = jacobian(t,kmrgd,par_a,par_b)
+function jac = jacobian(t,kmrgd,par_par)
 % --------------------------------------------------------------------------
-function jacp = jacobianp(t,kmrgd,par_a,par_b)
+function jacp = jacobianp(t,kmrgd,par_par)
 % --------------------------------------------------------------------------
-function hess = hessians(t,kmrgd,par_a,par_b)
+function hess = hessians(t,kmrgd,par_par)
 % --------------------------------------------------------------------------
-function hessp = hessiansp(t,kmrgd,par_a,par_b)
+function hessp = hessiansp(t,kmrgd,par_par)
 %---------------------------------------------------------------------------
-function tens3  = der3(t,kmrgd,par_a,par_b)
+function tens3  = der3(t,kmrgd,par_par)
 %---------------------------------------------------------------------------
-function tens4  = der4(t,kmrgd,par_a,par_b)
+function tens4  = der4(t,kmrgd,par_par)
 %---------------------------------------------------------------------------
-function tens5  = der5(t,kmrgd,par_a,par_b)
+function tens5  = der5(t,kmrgd,par_par)
 
 function out = UnitQuadweightsFun
 out=[0.0050505,0.04729,0.092818,0.12679,0.14961,0.15688,0.14961,0.12679,0.092818,0.04729,0.0050505];
