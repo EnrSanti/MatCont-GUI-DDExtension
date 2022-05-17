@@ -17,7 +17,7 @@ classdef CLSettingCoordinate < CLSetting
             
         end
         
-        function [valid, msg] = setValue(obj, newvalue)
+        function [valid, msg] = setValue(obj, newvalue) %è qui parte 2...
             [valid, msg] = obj.validitycheck.validate(newvalue);
             if valid
                obj.coordmodel.value(obj.index) = newvalue;  

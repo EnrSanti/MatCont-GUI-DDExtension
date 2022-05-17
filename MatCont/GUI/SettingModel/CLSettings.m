@@ -147,7 +147,7 @@ classdef CLSettings < handle
        end
        
        function out = subsref(obj , S)               
-               if isfield(obj.fields, S(1).subs)
+               if isfield(obj.fields, S(1).subs) %qui non l'ha ancora modificato
                   %disp('intercept');
                   if length(S) == 1
                       out = obj.fields.(S(1).subs).getValue();

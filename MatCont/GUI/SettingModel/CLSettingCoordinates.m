@@ -14,7 +14,10 @@ classdef CLSettingCoordinates < CLSetting
             %the actual dimension of the discretizing system
             try
                if(session.settings.fields.system.sys_type=="DDE")
-                    dim = dim*(session.settings.fields.system.no_discretizationPoints+1);  
+                    no_RE=session.settings.fields.system.no_RE;
+                    m=session.settings.fields.system.no_discretizationPoints;
+                   
+                    dim = (((dim-no_RE)*(m+1))+m*no_RE);  %modifica d2*(m+1)+d1*m
                end
             catch exception
                 dim=dim;

@@ -108,7 +108,8 @@ classdef CLContOutputInterpreter
                     % discretizing points) aprat
                     if(session.settings.fields.system.sys_type=="DDE")
                         m=session.settings.fields.system.no_discretizationPoints;
-                        selection = (0:ntst*ncol)*(dim*(m+1))+ index;
+                        no_RE=session.settings.fields.system.no_RE;
+                        selection = (0:ntst*ncol)*(((dim-no_RE)*(m+1))+m*no_RE)+ index; %modifica
                     else %every other case done as usual
                         selection = (0:ntst*ncol)*dim + index;
                     end
@@ -127,8 +128,9 @@ classdef CLContOutputInterpreter
           if(session.settings.fields.system.sys_type=="DDE")
                rep=ntst*ncol;
                m=session.settings.fields.system.no_discretizationPoints;
+               no_RE=session.settings.fields.system.no_RE;
                for index2=1:(rep)
-                  omap.x(index2*(m+1)*dim+(1:dim)) = coordinates;
+                  omap.x(index2*((dim-no_RE)*(m+1)+(m*no_RE))+(1:dim)) = coordinates; %modifica e chiedi
                end
           else
                omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
@@ -141,7 +143,10 @@ classdef CLContOutputInterpreter
           %number of equations discretizing the system has to be taken into
           %account
           if(session.settings.fields.system.sys_type=="DDE")
-                index = dim*(ntst*ncol+1)*(session.settings.fields.system.no_discretizationPoints+1) + 1;
+                m=session.settings.fields.system.no_discretizationPoints;
+                no_RE=session.settings.fields.system.no_RE;
+                
+                index = ((dim-no_RE)*(m+1)+(m*no_RE))*(ntst*ncol+1) + 1; %modifica
                 disp("debug:dde no eccezione");
            else
                index = dim*(ntst*ncol+1) + 1;

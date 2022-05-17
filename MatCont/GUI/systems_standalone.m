@@ -475,10 +475,10 @@ while feof(fid_read)==0  %qui
                 %writing in the file
                 maxT="abs(min(delayFunctions));"; % equivalente a max(abs())
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state((d1*M+1):(d1*M+d2));");
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state(1:M*d2);"); %end _> (d2*(M+1)                   
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state(1:d2);");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state(d2+1:(M+1)*d2);"); %end _> (d2*(M+1)                   
                 if(REno>0)
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d1+1):end);");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d2+1):end);");
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state");
                 end
                 %calculate the following arrays

@@ -37,7 +37,7 @@ classdef GUISettingEditBox < handle
                     x = []; 
                 end
                 setting = obj.settings.getSetting(obj.settingname);
-                [valid, errormsg] = setting.setValue(x);
+                [valid, errormsg] = setting.setValue(x); % è QUI!.... .-.
                 
                 if (~valid)
                     obj.performErrorDisplay();
