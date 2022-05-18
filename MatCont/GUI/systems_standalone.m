@@ -3,7 +3,7 @@ function varargout = systems_standalone(varargin)
 %    FIG = SYSTEM launch system GUI.
 %    SYSTEM('callback_name', ...) invoke the named callback.
     
-% Last Modified by GUIDE v2.5 16-Mar-2022 11:28:20
+% Last Modified by GUIDE v2.5 18-May-2022 12:20:39
 global gds oldgds path_sys MC driver_window;
 
 %-_-_-_-_-_-_%
@@ -174,10 +174,12 @@ end
 
 %assigning the type to save
 gds.sys_type = type; 
+quadratureDegree=0;
 %if the system is a DDE system, then collect the values for the delay
 %parametres and the discretization points
 if(strcmp(type,"DDE"))
     gds.no_discretizationPoints = str2num(handles.noDiscPoints.String);
+    quadratureDegree = str2num(handles.edit14.String);
 end
 %-_-_-_-_-_-_%
 
@@ -447,7 +449,7 @@ while feof(fid_read)==0  %qui
               
                 %write in the file all the variables needed in the fun_eval
                 %method
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt(M+1,0,1);");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt("+quadratureDegree+"+1,0,1);");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitQuadweights=UnitQuadweightsFun();");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitNodes=UnitNodesFun();");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitDD=UnitDDFun();");
@@ -2755,3 +2757,26 @@ function string=replace_sys_inputDDE(string)
         string{i,1} = strcat(temp{i,1},';');
     end
 %-_-_-_-_-_-_%
+
+
+
+function edit14_Callback(hObject, eventdata, handles)
+% hObject    handle to edit14 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit14 as text
+%        str2double(get(hObject,'String')) returns contents of edit14 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit14_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit14 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
