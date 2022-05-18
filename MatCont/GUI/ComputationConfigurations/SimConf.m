@@ -134,6 +134,7 @@ classdef SimConf < CompConf
             %if the system is a DDE one, the values of the coordinates must
             %be repeated, since we don't have just dim equations now, but
             %dim*(m+1)
+            %{
             if(system.sys_type=="DDE")
 
                 %getting the value of coordinates
@@ -157,7 +158,7 @@ classdef SimConf < CompConf
                 settings.fields.coord.value=listaCoord;
             end
             %-_-_-_-_-_-_%
-            
+            %}
             x0 = settings.coord;
             x0 = x0(:); %make column vector
             param = num2cell(settings.parameters);

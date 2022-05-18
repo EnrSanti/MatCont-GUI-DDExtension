@@ -152,8 +152,11 @@ classdef CLContOutputInterpreter
                dim=session.settings.fields.system.dim;
                no_DDE=dim-no_RE;
                for index2=1:(rep)
-                   omap.x((no_DDE*(m+1))+index2*((no_RE)*(m)+(no_DDE)*(m+1))+(1:no_RE)) = coordinates(no_DDE+1:dim); 
-                   omap.x(index2*((no_DDE)*(m+1)+(m*no_RE))+(1:no_DDE)) = coordinates(1:no_DDE); %modifica e chiedi
+                  if(index2>no_DDE)%allora RE
+                      omap.x((rep+1)*(no_DDE*(m+1))+index2*((no_RE)*(m))+(1:no_RE)) = coordinates(no_DDE+1:dim); 
+                  else %DDE
+                      omap.x(index2*((no_DDE)*(m+1))+(1:no_DDE)) = coordinates(1:no_DDE); %modifica e chiedi
+                  end
                end
           else
                omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);

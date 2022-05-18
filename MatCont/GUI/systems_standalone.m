@@ -574,8 +574,11 @@ while feof(fid_read)==0  %qui
                     
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:d1*M);");
                     %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= ["+writeGM+"(1/tau_max*dMDM_DDE)*[yM;VM];KM];");
-                
+                    if(DDEno>0)
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= ["+writeGM+"(1/tau_max*dMDM_DDE)*[yM;VM];KM];");
+                    else
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [KM];");
+                    end 
                 else
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];");  
                 end
