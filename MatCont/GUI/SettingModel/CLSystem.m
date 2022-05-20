@@ -5,6 +5,7 @@ classdef CLSystem
         sys_type = '';
         no_discretizationPoints = 0;
         no_RE=0;
+        no_quadraturePoints=0;
         %-_-_-_-_-_-_%
         name = ''
         coordinates = {}

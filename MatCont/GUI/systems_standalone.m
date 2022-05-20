@@ -100,7 +100,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     sys_type=gds.sys_type;
     if(~strcmp(sys_type, ''))
         displaySystem(sys_type); %fa tutti icasi
-        DDEPanelOff();
+        %DDEPanelOff();
         lockMenuType(handles);
     end
     %restoring the session by setting the proper values in the fields of
@@ -108,6 +108,13 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     if(strcmp(sys_type, 'DDE'))
         %setting the number of discretization points of the system
         set(handles.noDiscPoints,'String',sprintf('%d',gds.no_discretizationPoints));
+        %trying to find if no_quadraturePoints in the gds of a DDE system
+        %existed, if not, use for now gds.no_discretizationPoints
+        try
+            set(handles.edit14,'String',sprintf('%d',gds.no_quadraturePoints));
+        catch e
+            set(handles.edit14,'String',sprintf('%d',gds.no_discretizationPoints));
+        end
         %setting the help tooltip
         set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
         
@@ -443,7 +450,7 @@ while feof(fid_read)==0  %qui
                 DDEno=gds.dim-REno;
             
                 gds.no_RE=REno;
-                
+                gds.no_quadraturePoints=quadratureDegree;
                 %write in the m file the number of discretization points
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
               
@@ -1716,6 +1723,7 @@ global gds;
     gds.sys_type=''; 
     gds.no_discretizationPoints = 0;
     gds.no_RE = 0;
+    gds.no_quadraturePoints=0;
     %-_-_-_-_-_-_%
     
     gds.coordinates = []; gds.parameters = [];
@@ -1961,8 +1969,6 @@ function popupmenu3_CreateFcn(hObject, eventdata, handles)
    
     %turning off (not visible) the buttun to open the parameters panel (for
     %the DDE)
-    showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-    set(showPanelBtn(1),'Visible','off');
     
     
 % function called when the dropdownMenu option is changed (e.g. passing from a ODE to a DDE system)
@@ -2008,11 +2014,7 @@ function displaySystem(str)
         set(popupMenu(1),'Value',systemType.getPositionOfType("DDE"));
         %displaying the panel to input the parameters DDE specifc
         DDEPanelOn();
-        
-        %making the button to show the panel above visible
-        showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-        set(showPanelBtn(1),'Visible','on'); 
-        
+       
         %display the proper tooltip for entering the DDEs  
         
         %not visible symbolic & from window
@@ -2026,9 +2028,6 @@ function displaySystem(str)
     else %if ODE has been selected
         %turning off the input panel for the DDE parameters
         DDEPanelOff();
-        %making the button to show the panel above NOT visible
-        showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-       
         
         %visible symbolic & from window
         for elementIndex=1:length(tagsToEnableDisable)
@@ -2038,8 +2037,7 @@ function displaySystem(str)
         %ODE system
         set(systemInputWindow(1),'ToolTipString','');
         %set(systemInputWindow(1),'Tooltip',"");
-        
-        set(showPanelBtn(1),'Visible','off');
+       
     end
 
     
@@ -2051,10 +2049,6 @@ function DDEPanelOn()
     ddePanel = findall(groot,'Tag',"ddePanel");
     set(ddePanel(1),'Visible','on');  
     
-    %getting the panel button and disabling it
-    showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-    set(showPanelBtn(1),'Enable','off');
-
     
 % function that removes from the interface the panel to input the DDE specifc parameters
 % (also enabling the button to show the panel itself)    
@@ -2062,10 +2056,6 @@ function DDEPanelOff()
     %getting the panel, and turning it NOT visible 
     ddePanel = findall(groot,'Tag',"ddePanel");
     set(ddePanel(1),'Visible','off');
-
-    %getting the panel button and enabling it
-    showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-    set(showPanelBtn(1),'Enable','on');
     
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
