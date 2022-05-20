@@ -14,6 +14,7 @@ out{9} = [];
 
 function dydt = fun_eval (t,state,par_k,par_beta,par_a12,par_a21,par_TAUs,par_TAU1,par_TAU2)
 M=15;
+[thetaCap,wCap]=fclencurt(10+1,0,1);
 UnitQuadweights=UnitQuadweightsFun();
 UnitNodes=UnitNodesFun();
 UnitDD=UnitDDFun();
@@ -22,13 +23,12 @@ d1=0;
 d2=2;
 delayFunctions=[-par_TAU1,-par_TAU2,-par_TAUs];
 tau_max=abs(min(delayFunctions));
-yM=state((d1*M+1):(d1*M+d2));
-VM=state((d1*M+d2+1):(d2*(M+1)));
-GM = @(x) [-par_k*yM(1)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights))+par_a12*tanh(commonFunctions.interpoly(-par_TAU2,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights));
+yM=state(1:d2);
+VM=state(d2+1:(M+1)*d2);
+GM = [-par_k*yM(1)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights))+par_a12*tanh(commonFunctions.interpoly(-par_TAU2,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights));
 -par_k*yM(2)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights))+par_a21*tanh(commonFunctions.interpoly(-par_TAU1,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights))];
 dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
-KM=[]; 
-dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];
+dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)

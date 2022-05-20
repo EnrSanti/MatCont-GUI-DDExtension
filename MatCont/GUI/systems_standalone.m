@@ -501,7 +501,7 @@ while feof(fid_read)==0  %qui
                     nameTemp=split(string_sys{temporanee},"=");
                     nameTemp=nameTemp{1};
                     toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords),UnitNodes);
-                    fprintf(fid_write,'%s\n',nameTemp+"="+toWrite);
+                    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontnent,nameTemp+"="+toWrite);
                 end
                 %if the system has only one equation, write the rhs of GM
                 %without []
