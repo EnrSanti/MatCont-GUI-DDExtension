@@ -451,17 +451,14 @@ while feof(fid_read)==0  %qui
             
                 gds.no_RE=REno;
                 gds.no_quadraturePoints=quadratureDegree;
-                %write in the m file the number of discretization points
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
-              
+                
+                
                 %write in the file all the variables needed in the fun_eval
                 %method
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt("+quadratureDegree+"+1,0,1);");
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitQuadweights=UnitQuadweightsFun();");
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitNodes=UnitNodesFun();");
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UnitDD=UnitDDFun();");
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"BaryWeights=BaryWeightsFun();");
-                
+               
+                %write in the m file the number of discretization points 
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
                 %writing on file the number of RE and DDE
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d1=",strcat(sprintf('%d',REno),";")));
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d2=",strcat(sprintf('%d',DDEno),";")));
@@ -482,13 +479,20 @@ while feof(fid_read)==0  %qui
                 %max_tau moltiploco i nodi di cheb.
                 
                 %writing in the file
-                maxT="abs(min(delayFunctions));"; % equivalente a max(abs())
+                maxT="max(abs(delayFunctions));"; % equivalente a max(abs())
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
+                
+                
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"ScaledNodes=UnitNodesFun()*tau_max;");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"ScaledDD=UnitDDFun()/tau_max;");
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"BaryWeights=BaryWeightsFun();");
+                
+                
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state(1:d2);");
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state(d2+1:(M+1)*d2);"); %end _> (d2*(M+1)                   
                 if(REno>0)
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d2+1):end);");
-                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state");
                 end
                 %calculate the following arrays
                 [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
@@ -500,7 +504,7 @@ while feof(fid_read)==0  %qui
                 for temporanee=1:length(string_sys)
                     nameTemp=split(string_sys{temporanee},"=");
                     nameTemp=nameTemp{1};
-                    toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords),UnitNodes);
+                    toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords));
                     filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,nameTemp+"="+toWrite);
                 end
                 %if the system has only one equation, write the rhs of GM
@@ -523,7 +527,7 @@ while feof(fid_read)==0  %qui
                     for eqNo=(length(string_sys)+1):length(string_sys)+DDEno-1
                         eq=equations(eqNo,:);
                         equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
-                        equation=parseIntegral(equation,fid_write,filecontent);
+                        equation=parseIntegral(equation);
                         filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(equation,";"));  
                     end
 
@@ -532,7 +536,7 @@ while feof(fid_read)==0  %qui
 
                     eq=equations(eqNo,:);
                     equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
-                    equation=parseIntegral(equation,fid_write,filecontent);
+                    equation=parseIntegral(equation);
 
                     filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(endingGM,";"));  
@@ -540,7 +544,7 @@ while feof(fid_read)==0  %qui
                     writeGM="GM;";
                 end
                 %write in the file (fun_eval)
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));");  
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));");  
                     
                 %if the system contains also Renewal equations write the
                 %expression for KM, dMDM_RE, UM and the proper dy/dt else
@@ -560,7 +564,7 @@ while feof(fid_read)==0  %qui
                     for eqNo=length(string_sys)+DDEno+1:gds.dim+length(string_sys)-1
                         eq=equations(eqNo,:); %eq ha lhs=rhs
                         equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
-                        equation=parseIntegral(equation,fid_write,filecontent)
+                        equation=parseIntegral(equation)
                         FM=FM+equation+";"+char(10);                        
                     end
 
@@ -570,7 +574,7 @@ while feof(fid_read)==0  %qui
                 
                     eq=equations(eqNo,:); %eq ha lhs=rhs
                     equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
-                    equation=parseIntegral(equation,fid_write,filecontent)
+                    equation=parseIntegral(equation)
                     FM=FM+equation+"]";
                     
                     REstring=strcat("KM = derState - kron("+ FM + ",ones(M,1));");
@@ -680,12 +684,11 @@ end
 
 %-_-_-_-_-_-_% 
 %if the system is a DDE one, calculate
-%UnitQuadweights,UnitNodes,UnitDD,BaryWeights and write the respective
+%UnitNodes,UnitDD,BaryWeights and write the respective
 %functions in the file
 if(strcmp(gds.sys_type,"DDE"))
     
-    filecontent = write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitQuadweightsFun'); 
-    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',RowVett2Str(UnitQuadweights))); 
+  
     filecontent = write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitNodesFun'); 
     filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',ColVett2Str(UnitNodes)));   
     
@@ -2321,10 +2324,10 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords)
                 %da portare fuori dal ciclo
                 approx="";
                 if(~(i>DDEno))%%dde coord
-                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,[yM("+(i)+");VM("+(i)+":d2:end)],BaryWeights)";
+                    approx="commonFunctions.interpoly("+replace+",ScaledNodes,[yM("+(i)+");VM("+(i)+":d2:end)],BaryWeights)";
                 else%re coord
                     %modifica qui
-                    approx="commonFunctions.interpoly("+replace+",tau_max*UnitNodes,"+"[0;UM("+(i-DDEno)+":d1:end)],BaryWeights)";
+                    approx="commonFunctions.interpoly("+replace+",ScaledNodes,"+"[0;derState("+(i-DDEno)+":d1:end)],BaryWeights)";
                 end
                 %in the rhs we substitute the coordinate with a delay with
                 %the function that will compute its value (e.g y[t-2*TAU]
@@ -2537,7 +2540,7 @@ function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
 %function that given a diff equation, gets the different parameters from an equation containing an
 %integral, format: \int_{a}^{b}{expression}{integration variable} and
 %returns the actual equation to insert in the .m file
-function eqIn = parseIntegral(eqIn,fid_write,fivlecontent) 
+function eqIn = parseIntegral(eqIn) 
     global gds;
     expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
 
