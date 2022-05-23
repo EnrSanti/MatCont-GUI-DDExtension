@@ -501,7 +501,7 @@ while feof(fid_read)==0  %qui
                     nameTemp=split(string_sys{temporanee},"=");
                     nameTemp=nameTemp{1};
                     toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords),UnitNodes);
-                    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontnent,nameTemp+"="+toWrite);
+                    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,nameTemp+"="+toWrite);
                 end
                 %if the system has only one equation, write the rhs of GM
                 %without []
@@ -2680,8 +2680,12 @@ function eqIn = parseIntegral(eqIn,fid_write,fivlecontent)
         fCap=strrep(funzione,diff,"thetaCap"+b_a+"+"+a);
         
         %susbstituing the intergral with dot(f^,weights)*(b-a)
-        eqIn=strrep(eqIn,integral,"dot("+fCap+",wCap)"+b_a);
-        
+        %must substitute only the last
+        %eqIn=strrep(eqIn,integral,"dot("+fCap+",wCap)"+b_a);
+       
+        posizioni = strfind(eqIn, integral);
+        last = posizioni(end);
+        eqIn = strcat(strcat(extractBetween(eqIn,1,last - 1), "dot("+fCap+",wCap)"+b_a), extractBetween(eqIn,last+strlength(integral),strlength(eqIn)));
     end
     
 
