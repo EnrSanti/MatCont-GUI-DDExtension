@@ -1,4 +1,4 @@
-function out = LogisticDAPHNIA
+function out = mGprova
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -12,43 +12,40 @@ out{9} = [];
 % --------------------------------------------------------------------------
 
 
-function dydt = fun_eval (t,state,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
-[thetaCap,wCap]=fclencurt(20+1,0,1);
+function dydt = fun_eval (t,state,par_beta,par_gamma,par_TAU,par_n)
+[thetaCap,wCap]=fclencurt(10+1,0,1);
 M=10;
-d1=1;
+d1=0;
 d2=1;
-delayFunctions=[par_a,par_amax,par_a,par_amax];
+delayFunctions=[-par_TAU];
 tau_max=max(abs(delayFunctions));
 ScaledNodes=UnitNodesFun()*tau_max;
 ScaledDD=UnitDDFun()/tau_max;
 BaryWeights=BaryWeightsFun();
 yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
-UM=state((d2*M+d2+1):end);
-derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-GM = par_r*yM(1)*(1-yM(1)/par_k)-par_gamma*yM(1)*dot(commonFunctions.interpoly(-thetaCap*(par_amax-(par_a))+par_a,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(par_amax-(par_a));
+GM = par_beta*(commonFunctions.interpoly(-par_TAU,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)/(1+commonFunctions.interpoly(-par_TAU,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)^par_n))-par_gamma*yM(1);
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
-KM = derState - kron([par_beta.*yM(1).*dot(commonFunctions.interpoly(-thetaCap*(par_amax-(par_a))+par_a,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(par_amax-(par_a))],ones(M,1));
-dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM];KM];
+dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 
 % --------------------------------------------------------------------------
-function jac = jacobian(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function jac = jacobian(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 % --------------------------------------------------------------------------
-function jacp = jacobianp(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function jacp = jacobianp(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 % --------------------------------------------------------------------------
-function hess = hessians(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function hess = hessians(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 % --------------------------------------------------------------------------
-function hessp = hessiansp(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function hessp = hessiansp(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 %---------------------------------------------------------------------------
-function tens3  = der3(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function tens3  = der3(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 %---------------------------------------------------------------------------
-function tens4  = der4(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function tens4  = der4(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 %---------------------------------------------------------------------------
-function tens5  = der5(t,kmrgd,par_beta,par_r,par_a,par_amax,par_k,par_gamma)
+function tens5  = der5(t,kmrgd,par_beta,par_gamma,par_TAU,par_n)
 
 function out = UnitNodesFun
 out=[0;-0.024472;-0.095492;-0.20611;-0.34549;-0.5;-0.65451;-0.79389;-0.90451;-0.97553;-1];

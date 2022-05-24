@@ -37,11 +37,10 @@ classdef GUISettingEditBox < handle
                     x = []; 
                 end
                 setting = obj.settings.getSetting(obj.settingname);
-                
-                [valid, errormsg] = setting.setValue(x); % è QUI!.... .-.
+                %modifiva index di obj
 %               
-                %-_-_-_-_-_-_%
-                %extracting all the data
+                [valid, errormsg] = setting.setValue(x); % è QUI!.... .-.
+%                 
                 global session;
                 m=session.settings.fields.system.no_discretizationPoints;
                 dim=session.settings.fields.system.dim;
@@ -49,18 +48,15 @@ classdef GUISettingEditBox < handle
                 
                 RE_coords=[""];
                 actualIndex=[0];
-                %if the value modified is related to a coordinate
                 if(isequal(class(setting),'CLSettingCoordinate'))
-                    %for each RE, update index & save the old one
+                    %if(setting.index>dim-no_RE) %then is an RE
+                    
                     for indiceRE=1:no_RE
-                        %getting the name of the RE coordinate
-                        %(co_nameCoordiante)
                         RE_coords(indiceRE)="co_"+setting.coordmodel.coordinates{dim-no_RE+indiceRE};
                         actualIndex(indiceRE)=obj.settings.fields.(RE_coords(indiceRE)).index;
-                        obj.settings.fields.(RE_coords(indiceRE)).index=(dim-no_RE)*(m+1)+actualIndex(indiceRE)-(dim-no_RE);
+                        obj.settings.fields.(RE_coords(indiceRE)).index=(dim-no_RE)*(m+1)+actualIndex(-(dim-no_RE);
                     end
                 end
-                %-_-_-_-_-_-_%
                 if (~valid)
                     obj.performErrorDisplay();
                     fprintf(2, sprintf('[%s] ERROR(%s): %s, value: %s\n\n',datetime('now', 'format', 'HH:mm:ss'), obj.settingname, errormsg, string));
@@ -68,15 +64,14 @@ classdef GUISettingEditBox < handle
                 else
                     obj.settings.refresh();
                 end
-                %-_-_-_-_-_-_%
-                %if a coordinate has been modified, shift back all the RE
-                %coords indexes
+                
                 if(isequal(class(setting),'CLSettingCoordinate'))
+                   
                     for indiceRE=1:no_RE
                         obj.settings.fields.(RE_coords(indiceRE)).index=actualIndex(indiceRE);
                     end
                 end
-                %-_-_-_-_-_-_%
+                
             catch error
           
                 fprintf(2, sprintf('[%s] ERROR(%s): %s: %s, value: %s\n\n',datetime('now', 'format', 'HH:mm:ss'), obj.settingname, error.message, string));

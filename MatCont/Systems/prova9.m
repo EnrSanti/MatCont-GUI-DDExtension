@@ -13,26 +13,25 @@ out{9} = [];
 
 
 function dydt = fun_eval (t,state,par_a,par_b)
+[thetaCap,wCap]=fclencurt(10+1,0,1);
 M=10;
-[thetaCap,wCap]=fclencurt(M+1,0,1);
-UnitQuadweights=UnitQuadweightsFun();
-UnitNodes=UnitNodesFun();
-UnitDD=UnitDDFun();
-BaryWeights=BaryWeightsFun();
 d1=1;
 d2=3;
 delayFunctions=[-12,-par_b,par_a,2*par_b];
-tau_max=abs(min(delayFunctions));
-yM=state((d1*M+1):(d1*M+d2));
-VM=state((d1*M+d2+1):end);
-UM=state(1:M*d1);
-derState=kron(UnitDD(2:end,2:end),eye(d1))*UM; %DM*state
-GM = [commonFunctions.interpoly(-par_b,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights);
-commonFunctions.interpoly(-12,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights)+yM(1)-3;
-yM(3)+32];
-dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
-KM = derState - kron([dot(commonFunctions.interpoly(-thetaCap*(2.*par_b-(par_a))+par_a,tau_max*UnitNodes,[0;UM(1:d1:end)],BaryWeights).^2+3,wCap)*(2.*par_b-(par_a))],ones(M,1));
-dydt= [GM;KM;(1/tau_max*dMDM_DDE)*[yM;VM]];
+tau_max=max(abs(delayFunctions));
+ScaledNodes=UnitNodesFun()*tau_max;
+ScaledDD=UnitDDFun()/tau_max;
+BaryWeights=BaryWeightsFun();
+yM=state(1:d2);
+VM=state(d2+1:(M+1)*d2);
+UM=state((d2*M+d2+1):end);
+derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
+GM = [commonFunctions.interpoly(-par_b,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights);
+commonFunctions.interpoly(-12,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights)+yM(1)-3;
+yM(3)+32                                        ];
+dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
+KM = derState - kron([dot(commonFunctions.interpoly(-thetaCap*(2.*par_b-(par_a))+par_a,ScaledNodes,[0;derState(1:d1:end)],BaryWeights).^2+3,wCap)*(2.*par_b-(par_a))],ones(M,1));
+dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM];KM];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)
@@ -53,8 +52,6 @@ function tens4  = der4(t,kmrgd,par_a,par_b)
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_a,par_b)
 
-function out = UnitQuadweightsFun
-out=[0.0050505,0.04729,0.092818,0.12679,0.14961,0.15688,0.14961,0.12679,0.092818,0.04729,0.0050505];
 function out = UnitNodesFun
 out=[0;-0.024472;-0.095492;-0.20611;-0.34549;-0.5;-0.65451;-0.79389;-0.90451;-0.97553;-1];
 function out = UnitDDFun

@@ -66,6 +66,7 @@ classdef GUIPlotConf < handle
                 oi = obj.solutionhandler.solution.compbranch.getOutputInterpreter();
                 %cla(obj.axeshandle); %Clear when (re)drawing solution
                 out = obj.getOutputter(oi.getPlotter(), obj.getPointLoaderLabel(obj.solutionhandler.solutionpath));
+                %la stampa è fatta qui
                 out.plotSolution(obj.solutionhandler.solution);
             end
         end

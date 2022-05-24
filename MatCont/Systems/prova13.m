@@ -14,30 +14,23 @@ out{9} = [];
 
 function dydt = fun_eval (t,state,par_a)
 [thetaCap,wCap]=fclencurt(10+1,0,1);
-
 M=10;
 d1=2;
 d2=2;
 delayFunctions=[-2,-3,-1,-5,-4,1,5];
 tau_max=max(abs(delayFunctions));
-
 ScaledNodes=UnitNodesFun()*tau_max;
 ScaledDD=UnitDDFun()/tau_max;
 BaryWeights=BaryWeightsFun();
-
 yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-
 GM = [dot(commonFunctions.interpoly(+thetaCap*(-1-(-3))+-3,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights),wCap)*(-1-(-3))+32;
 commonFunctions.interpoly(-2,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights)+yM(1)];
-
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
-
 KM = derState - kron([dot(11+commonFunctions.interpoly(+thetaCap*(-4-(-5))+-5,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(-4-(-5)).^2;
 dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1))],ones(M,1));
-
 dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM];KM];
 
 % --------------------------------------------------------------------------

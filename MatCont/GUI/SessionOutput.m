@@ -58,6 +58,7 @@ classdef SessionOutput
         
         function output(obj,xout,s,hout,fout,ind)
             global sOutput
+            %da sapere ntst;
             if (sOutput.enabled)
                 try
                     for i = 1:length(obj.outputlist)

@@ -72,6 +72,7 @@ classdef GUIPlotOutputter < handle
                         line(data{:}, 'Parent', obj.group,  obj.plotconfig.curve{:}, modification{:});
                     end
                 else
+                    
                     data = obj.getData(contdata, s, j:i);
                     line(data{:}, 'Parent', obj.group,  obj.plotconfig.curve{:});
                 end
@@ -145,6 +146,16 @@ classdef GUIPlotOutputter < handle
         
         function plotSolution(obj, solution)
            obj.reset();
+           %-_-_-_-_-_-_%z
+           %da modificare solution.getDiscreti... + salva function handler
+           %in gds (non più necessario)
+           
+           global settings;
+           func_handles = feval(settings.fields.system.handle);
+           f_eval=func_handles{2};
+           %-_-_-_-_-_-_%
+           
+           
            obj.output({solution.x, solution.h, solution.f}, solution.s(1), 1:size(solution.x, 2));
            
            for i = 2:length(solution.s)-1

@@ -13,21 +13,20 @@ out{9} = [];
 
 
 function dydt = fun_eval (t,state,par_k,par_beta,par_a12,par_a21,par_TAUs,par_TAU1,par_TAU2)
-M=15;
 [thetaCap,wCap]=fclencurt(10+1,0,1);
-UnitQuadweights=UnitQuadweightsFun();
-UnitNodes=UnitNodesFun();
-UnitDD=UnitDDFun();
-BaryWeights=BaryWeightsFun();
+M=15;
 d1=0;
 d2=2;
 delayFunctions=[-par_TAU1,-par_TAU2,-par_TAUs];
-tau_max=abs(min(delayFunctions));
+tau_max=max(abs(delayFunctions));
+ScaledNodes=UnitNodesFun()*tau_max;
+ScaledDD=UnitDDFun()/tau_max;
+BaryWeights=BaryWeightsFun();
 yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
-GM = [-par_k*yM(1)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights))+par_a12*tanh(commonFunctions.interpoly(-par_TAU2,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights));
--par_k*yM(2)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,tau_max*UnitNodes,[yM(2);VM(2:d2:end)],BaryWeights))+par_a21*tanh(commonFunctions.interpoly(-par_TAU1,tau_max*UnitNodes,[yM(1);VM(1:d2:end)],BaryWeights))];
-dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));
+GM = [-par_k*yM(1)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights))+par_a12*tanh(commonFunctions.interpoly(-par_TAU2,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights));
+-par_k*yM(2)+par_beta*tanh(commonFunctions.interpoly(-par_TAUs,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights))+par_a21*tanh(commonFunctions.interpoly(-par_TAU1,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights))];
+dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
 dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM]];
 
 % --------------------------------------------------------------------------
@@ -49,8 +48,6 @@ function tens4  = der4(t,kmrgd,par_k,par_beta,par_a12,par_a21,par_TAUs,par_TAU1,
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_k,par_beta,par_a12,par_a21,par_TAUs,par_TAU1,par_TAU2)
 
-function out = UnitQuadweightsFun
-out=[0.0022222,0.021257,0.042769,0.06147,0.077867,0.090665,0.099607,0.10414,0.10414,0.099607,0.090665,0.077867,0.06147,0.042769,0.021257,0.0022222];
 function out = UnitNodesFun
 out=[0;-0.010926;-0.043227;-0.095492;-0.16543;-0.25;-0.34549;-0.44774;-0.55226;-0.65451;-0.75;-0.83457;-0.90451;-0.95677;-0.98907;-1];
 function out = UnitDDFun

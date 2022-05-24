@@ -3,9 +3,13 @@ classdef CLSystem
     properties
         %-_-_-_-_-_-_%
         sys_type = '';
+        %to approximate delay equations
         no_discretizationPoints = 0;
+        %of dim how many are REs
         no_RE=0;
+        %to approximate integrals
         no_quadraturePoints=0;
+        handler_REfirst='';
         %-_-_-_-_-_-_%
         name = ''
         coordinates = {}
@@ -32,7 +36,9 @@ classdef CLSystem
         function re_no = getNo_RE(obj)
            re_no = obj.no_RE; 
         end
-       
+        function handler_REfirst = getHandler_REfirst(obj)
+           handler_REfirst = obj.handler_REfirst; 
+        end
         %-_-_-_-_-_-_%
         function name = getName(obj)
            name = obj.name; 
@@ -67,6 +73,8 @@ classdef CLSystem
                 if(strcmp(obj.sys_type,"DDE"))
                     obj.no_discretizationPoints=gds.no_discretizationPoints;
                     obj.no_RE=gds.no_RE;
+                    %get the handler
+                    %obj.handler_REfirst=gds.handler_REfirst;
                     disp("DDE "+obj.no_discretizationPoints);
                 else
                     disp("ODE");

@@ -159,7 +159,7 @@ classdef CLSettings < handle
                       fprintf(2, 'ERROR\n');
                   end
                else
-                    %modifica qui
+                    %
                     out = builtin('subsref', obj, S);
                end
        end

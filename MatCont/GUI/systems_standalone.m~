@@ -401,8 +401,9 @@ else siz=0;end
 
 
 
-
-
+%-_-_-_-_-_-_% 
+RE_handler="";
+%-_-_-_-_-_-_% 
 h=0;
 filecontent = '';
 while feof(fid_read)==0  %qui
@@ -425,6 +426,7 @@ while feof(fid_read)==0  %qui
         
         if(contains(matches,"function dydt") && gds.sys_type=="DDE")
             filecontent = write_M_and_File_Content(fid_write,'\n\n%s\n',filecontent,strcat("function dydt = fun_eval (t,state",strcat(par,")")));
+            strcat("function dydt = fun_eval (t,state",strcat(par,")"))
         else
             filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,matches);
         end
