@@ -163,11 +163,11 @@ classdef GUIPlotOutputter < handle
                for indexBlock=1:ntst*ncol+1
                     for indexRowRE=1:d1
                         rhsFun=gds.handler_REfirst(indexRowRE);
-                        solution.x((d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)*(indexBlock-1)+d2*(gds.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun(0,solution.x((d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)),:),obj.pointloader.session.settings.fields.parameters.value{:});
+                        solution.x((d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)*(indexBlock-1)+d2*(gds.no_discretizationPoints+1),indexCol)=rhsFun(0,solution.x(1:(d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints),:),obj.pointloader.session.settings.fields.parameters.value{:});
                     end
                 end
            end
-           %-_-_-_-_-_-_%
+               %-_-_-_-_-_-_%
            
            
            obj.output({solution.x, solution.h, solution.f}, solution.s(1), 1:size(solution.x, 2));

@@ -1,4 +1,4 @@
-function [out,rhs] = prova15
+function [out,rhs] = prova14N
 out{1} = @init;
 out{2} = @fun_eval;
 out{3} = [];
@@ -14,12 +14,12 @@ rhs{2}=@RHSre2;
 % --------------------------------------------------------------------------
 
 
-function dydt = fun_eval (t,state,par_a)
+function dydt = fun_eval (t,state,par_par)
 [thetaCap,wCap]=fclencurtVals();
 M=10;
 d1=2;
-d2=0;
-delayFunctions=[-5,-4,1,5,1,5];
+d2=1;
+delayFunctions=[-5,-4,1,5];
 tau_max=max(abs(delayFunctions));
 ScaledNodes=UnitNodesFun()*tau_max;
 ScaledDD=UnitDDFun()/tau_max;
@@ -28,31 +28,30 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP1=par_a*3;
-TMP2=TMP1+3;
+GM = yM(1)+1                                    ;
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
-KM = derState - kron([dot(11+commonFunctions.interpoly(+thetaCap*(-4-(-5))+-5,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(-4-(-5)).^2;
-dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1))+dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1))],ones(M,1));
-dydt= [KM];
+KM = derState - kron([dot(commonFunctions.interpoly(+thetaCap*(-4-(-5))+-5,ScaledNodes,[0;derState(1:d1:end)],BaryWeights)+3,wCap)*(-4-(-5));
+dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(5-(1))],ones(M,1));
+dydt= [GM;(1/tau_max*dMDM_DDE)*[yM;VM];KM];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)
 state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];
 
 % --------------------------------------------------------------------------
-function jac = jacobian(t,kmrgd,par_a)
+function jac = jacobian(t,kmrgd,par_par)
 % --------------------------------------------------------------------------
-function jacp = jacobianp(t,kmrgd,par_a)
+function jacp = jacobianp(t,kmrgd,par_par)
 % --------------------------------------------------------------------------
-function hess = hessians(t,kmrgd,par_a)
+function hess = hessians(t,kmrgd,par_par)
 % --------------------------------------------------------------------------
-function hessp = hessiansp(t,kmrgd,par_a)
+function hessp = hessiansp(t,kmrgd,par_par)
 %---------------------------------------------------------------------------
-function tens3  = der3(t,kmrgd,par_a)
+function tens3  = der3(t,kmrgd,par_par)
 %---------------------------------------------------------------------------
-function tens4  = der4(t,kmrgd,par_a)
+function tens4  = der4(t,kmrgd,par_par)
 %---------------------------------------------------------------------------
-function tens5  = der5(t,kmrgd,par_a)
+function tens5  = der5(t,kmrgd,par_par)
 
 function out = UnitNodesFun
 out=[0;-0.024472;-0.095492;-0.20611;-0.34549;-0.5;-0.65451;-0.79389;-0.90451;-0.97553;-1];
@@ -66,12 +65,12 @@ function [thetaCap,wCap] = fclencurtVals
 thetaCap=[1;0.97553;0.90451;0.79389;0.65451;0.5;0.34549;0.20611;0.095492;0.024472;0];
 wCap=[0.0050505;0.04729;0.092818;0.12679;0.14961;0.15688;0.14961;0.12679;0.092818;0.04729;0.0050505];
 
-function out = RHSre1(t,state,par_a)
+function out = RHSre1(t,state,par_par)
 [thetaCap,wCap]=fclencurtVals();
 M=10;
 d1=2;
-d2=0;
-delayFunctions=[-5,-4,1,5,1,5];tau_max=max(abs(delayFunctions));
+d2=1;
+delayFunctions=[-5,-4,1,5];tau_max=max(abs(delayFunctions));
 ScaledNodes=UnitNodesFun()*tau_max;
 ScaledDD=UnitDDFun()/tau_max;
 BaryWeights=BaryWeightsFun();
@@ -79,16 +78,14 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP1=par_a*3;
-TMP2=TMP1+3;
-out=dot(11+commonFunctions.interpoly(+thetaCap*(-4-(-5))+-5,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(-4-(-5)).^2;
+out=dot(commonFunctions.interpoly(+thetaCap*(-4-(-5))+-5,ScaledNodes,[0;derState(1:d1:end)],BaryWeights)+3,wCap)*(-4-(-5));
 
-function out = RHSre2(t,state,par_a)
+function out = RHSre2(t,state,par_par)
 [thetaCap,wCap]=fclencurtVals();
 M=10;
 d1=2;
-d2=0;
-delayFunctions=[-5,-4,1,5,1,5];tau_max=max(abs(delayFunctions));
+d2=1;
+delayFunctions=[-5,-4,1,5];tau_max=max(abs(delayFunctions));
 ScaledNodes=UnitNodesFun()*tau_max;
 ScaledDD=UnitDDFun()/tau_max;
 BaryWeights=BaryWeightsFun();
@@ -96,8 +93,6 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP1=par_a*3;
-TMP2=TMP1+3;
-out=dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1))+dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1));
+out=dot(commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+commonFunctions.interpoly(-thetaCap*(5-(1))+1,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(5-(1));
 
 

@@ -402,7 +402,8 @@ else siz=0;end
 
 
 
-
+RErhs="";
+RErhsContent="";
 h=0;
 filecontent = '';
 while feof(fid_read)==0  %qui
@@ -413,6 +414,12 @@ while feof(fid_read)==0  %qui
             %scrive sul file del sistema:
             fprintf(fid_write,'%s\n',string_handles{i,1});
             %filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
+        end
+        if(gds.sys_type=="DDE")
+            REno=getREno(equations(length(string_sys)+1:end,:));
+            for indexREout=1:REno
+                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"rhs{"+indexREout+"}=@RHSre"+indexREout+";"); 
+            end
         end
     end        
     
@@ -426,7 +433,11 @@ while feof(fid_read)==0  %qui
         if(contains(matches,"function dydt") && gds.sys_type=="DDE")
             filecontent = write_M_and_File_Content(fid_write,'\n\n%s\n',filecontent,strcat("function dydt = fun_eval (t,state",strcat(par,")")));
         else
-            filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,matches);
+            if(matches==strcat("function out = ",gds.system) && gds.sys_type=="DDE") %then write [out,rhs]
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("function [out,rhs] = ",gds.system));
+            else
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,matches);           
+            end
         end
 
     end
@@ -459,13 +470,16 @@ while feof(fid_read)==0  %qui
                 
                 %write in the file all the variables needed in the fun_eval
                 %method
-                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurt("+quadratureDegree+"+1,0,1);");
-               
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurtVals();");
+                RErhsContent="[thetaCap,wCap]=fclencurtVals();"+char(10);
                 %write in the m file the number of discretization points 
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
+                RErhsContent=RErhsContent+strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";"))+char(10);
                 %writing on file the number of RE and DDE
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d1=",strcat(sprintf('%d',REno),";")));
+                RErhsContent=RErhsContent+strcat("d1=",strcat(sprintf('%d',REno),";"))+char(10);
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d2=",strcat(sprintf('%d',DDEno),";")));
+                RErhsContent=RErhsContent+strcat("d2=",strcat(sprintf('%d',DDEno),";"))+char(10);
                 
                 %non mi servono i parametri ma, le funzioni di ritardo..
                 %e.g. [t-2*TAU].. il massimo sarà 2TAU
@@ -477,7 +491,7 @@ while feof(fid_read)==0  %qui
                 %making the array a string in order to save it in the file
                 vettRitardi=RowVett2Str(vettoreRitardi);                
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("delayFunctions=",vettRitardi));
-                
+                RErhsContent=RErhsContent+strcat("delayFunctions=",vettRitardi);
                 
                 %il massimo positivo sostanzialmente, perchè poi per
                 %max_tau moltiploco i nodi di cheb.
@@ -485,18 +499,24 @@ while feof(fid_read)==0  %qui
                 %writing in the file
                 maxT="max(abs(delayFunctions));"; % equivalente a max(abs())
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
-                
+                RErhsContent=RErhsContent+strcat("tau_max=",maxT)+char(10);
                 
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"ScaledNodes=UnitNodesFun()*tau_max;");
+                RErhsContent=RErhsContent+"ScaledNodes=UnitNodesFun()*tau_max;"+char(10);
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"ScaledDD=UnitDDFun()/tau_max;");
+                RErhsContent=RErhsContent+"ScaledDD=UnitDDFun()/tau_max;"+char(10);
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"BaryWeights=BaryWeightsFun();");
-                
+                RErhsContent=RErhsContent+"BaryWeights=BaryWeightsFun();"+char(10);
                 
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state(1:d2);");
+                RErhsContent=RErhsContent+"yM=state(1:d2);"+char(10);
                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state(d2+1:(M+1)*d2);"); %end _> (d2*(M+1)                   
+                RErhsContent=RErhsContent+"VM=state(d2+1:(M+1)*d2);"+char(10);
                 if(REno>0)
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d2+1):end);");
+                    RErhsContent=RErhsContent+"UM=state((d2*M+d2+1):end);"+char(10);
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state");
+                    RErhsContent=RErhsContent+"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state"+char(10);
                 end
                 %calculate the following arrays
                 [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
@@ -510,6 +530,7 @@ while feof(fid_read)==0  %qui
                     nameTemp=nameTemp{1};
                     toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords));
                     filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,nameTemp+"="+toWrite);
+                    RErhsContent=RErhsContent+nameTemp+"="+toWrite+char(10);
                 end
                 %if the system has only one equation, write the rhs of GM
                 %without []
@@ -564,12 +585,19 @@ while feof(fid_read)==0  %qui
                     
                     FM=openingFM;
                     
+                    %gds.handler_REfirst="";
+                    REindex=1;
+                    %apri file
                     %for each RE equaton
                     for eqNo=length(string_sys)+DDEno+1:gds.dim+length(string_sys)-1
                         eq=equations(eqNo,:); %eq ha lhs=rhs
                         equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
                         equation=parseIntegral(equation);
-                        FM=FM+equation+";"+char(10);                        
+                        
+                        RErhs=RErhs+"function out = RHSre"+REindex+"(t,state"+par+")"+char(10)+RErhsContent+"out="+equation+";"+char(10)+char(10);
+                        REindex=REindex+1; %++
+                        FM=FM+equation+";"+char(10);        
+                        
                     end
 
                     %parsing the last equation and closing the eventual bracket "];"
@@ -579,6 +607,8 @@ while feof(fid_read)==0  %qui
                     eq=equations(eqNo,:); %eq ha lhs=rhs
                     equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords);
                     equation=parseIntegral(equation);
+                    
+                    RErhs=RErhs+"function out = RHSre"+REindex+"(t,state"+par+")"+char(10)+RErhsContent+"out="+equation+";"+char(10)+char(10);                        
                     FM=FM+equation+"]";
                     
                     REstring=strcat("KM = derState - kron("+ FM + ",ones(M,1));");
@@ -709,6 +739,13 @@ if(strcmp(gds.sys_type,"DDE"))
     filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = BaryWeightsFun');
     filecontent=write_M_and_File_Content(fid_write,'%s\n\n',filecontent,strcat('out=',RowVett2Str(BaryWeights)));
       
+    [thetaCap,wCap]=fclencurt(quadratureDegree+1,0,1);
+    filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function [thetaCap,wCap] = fclencurtVals');
+    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat('thetaCap=',ColVett2Str(thetaCap)));
+    filecontent=write_M_and_File_Content(fid_write,'%s\n\n',filecontent,strcat('wCap=',ColVett2Str(wCap)));
+    
+    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,RErhs);
+    
 end
 %-_-_-_-_-_-_%
 
