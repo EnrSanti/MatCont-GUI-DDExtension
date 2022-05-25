@@ -514,7 +514,7 @@ while feof(fid_read)==0  %qui
                 RErhsContent=RErhsContent+"VM=state(d2+1:(M+1)*d2);"+char(10);
                 if(REno>0)
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d2+1):end);");
-                    RErhsContent=RErhsContent+"UM=state((d2*M+d2+1):end);"+char(10);
+                    RErhsContent=RErhsContent+"UM=state((d2*M+d2+1):d2*(M+1)+d1*M);"+char(10);
                     filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state");
                     RErhsContent=RErhsContent+"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state"+char(10);
                 end

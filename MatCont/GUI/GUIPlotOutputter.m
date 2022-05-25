@@ -145,25 +145,28 @@ classdef GUIPlotOutputter < handle
         
         
         function plotSolution(obj, solution)
-           global gds;
+           
            obj.reset();
            %-_-_-_-_-_-_%
+           %ricalcolo UNITDD (scalata)?
+           
+           [ntst,ncol]=solution.getDiscretization();
+           global session;
+           sessionGDS=session.settings.fields.system;           
+           
            %da modificare solution.getDiscreti... + salva function handler
            %in gds
            %take the columns
            [r,c]=size(solution.x);
-           d2=gds.dim-gds.no_RE;
-           d1=gds.no_RE;
-           %ricalcolo UNITDD (scalata)?
-           
-           
-           [ntst,ncol]=solution.getDiscretization();
-
+           d2=sessionGDS.dim-sessionGDS.no_RE;
+           d1=sessionGDS.no_RE;
+           hdl=session.settings.fields.system.handle;
+           [~,rhsFun]=hdl();
            for indexCol=1:c
                for indexBlock=1:ntst*ncol+1
                     for indexRowRE=1:d1
-                        rhsFun=gds.handler_REfirst(indexRowRE);
-                        solution.x((d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)*(indexBlock-1)+d2*(gds.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun(0,solution.x((d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(gds.no_discretizationPoints+1)+d1*gds.no_discretizationPoints)),:),obj.pointloader.session.settings.fields.parameters.value{:});
+                        parametersLine=num2cell(obj.pointloader.session.settings.fields.parameters.value);
+                        solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+d2*(sessionGDS.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun{indexRowRE}(0,solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)),indexCol),parametersLine{:});
                     end
                 end
            end
