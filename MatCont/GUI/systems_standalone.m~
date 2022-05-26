@@ -2730,8 +2730,7 @@ function eqIn = parseIntegral(eqIn)
         posizioni = strfind(eqIn, integral);
         last = posizioni(end);
         
-        actual_b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
-        eqIn = strcat(strcat(extractBetween(eqIn,1,last - 1), "dot("+fCap+",wCap)"+actual_b_a), extractBetween(eqIn,last+strlength(integral),strlength(eqIn)));
+        eqIn = strcat(strcat(extractBetween(eqIn,1,last - 1), "dot("+fCap+",wCap)"+b_a), extractBetween(eqIn,last+strlength(integral),strlength(eqIn)));
     end
     
 

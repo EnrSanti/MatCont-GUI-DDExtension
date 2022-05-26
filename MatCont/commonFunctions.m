@@ -45,7 +45,7 @@ classdef commonFunctions
         w=w*abs(b-a)/2;
 
         % Barycentric weights
-        q=1./prod(dX'+eye(N+1)); %q=1./prod(dX'+eye(N+1)); % row vector of the barycentric weights
+        q=[1/2,ones(1,N-1),1/2].*(-1).^(0:N); %q=1./prod(dX'+eye(N+1)); % row vector of the barycentric weights
         end
         
         % Computes the value of the interpolating polynomial (Nodes,Values) in theta,
