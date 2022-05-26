@@ -334,7 +334,7 @@ classdef ContConf < CompConf
             else
                 b = system.getDim() >= dim;
             end
-            %-_-_-_-_-_-_%
+            %-_-_-_-_-_-_%  
         end
     end
 end

@@ -2720,7 +2720,7 @@ function eqIn = parseIntegral(eqIn)
         
         end
         
-       
+        %riscala
         fCap=strrep(funzione,diff,"thetaCap"+b_a+"+"+a);
         
         %susbstituing the intergral with dot(f^,weights)*(b-a)

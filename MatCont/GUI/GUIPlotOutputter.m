@@ -153,25 +153,25 @@ classdef GUIPlotOutputter < handle
            if(sessionGDS.sys_type=="DDE")
                %recalculate first RE row(S)
                [ntst,ncol]=solution.getDiscretization();
-               
-
-
-               %da modificare solution.getDiscreti... + salva function handler
-               %in gds
-               %take the columns
-               [r,c]=size(solution.x);
-               d2=sessionGDS.dim-sessionGDS.no_RE;
                d1=sessionGDS.no_RE;
-               %handle to get the functions in the m file
-               hdl=session.settings.fields.system.handle;
-               [~,rhsFun]=hdl();
-               for indexCol=1:c
-                   for indexBlock=1:ntst*ncol+1
-                        for indexRowRE=1:d1
-                            parametersLine=num2cell(obj.pointloader.session.settings.fields.parameters.value);
-                            solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+d2*(sessionGDS.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun{indexRowRE}(0,solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)),indexCol),parametersLine{:});
+
+               if(d1>0) %se non ha re non si fa
+                   %da modificare solution.getDiscreti... + salva function handler
+                   %in gds
+                   %take the columns
+                   [r,c]=size(solution.x);
+                   d2=sessionGDS.dim-sessionGDS.no_RE;
+                   %handle to get the functions in the m file
+                   hdl=session.settings.fields.system.handle;
+                   [~,rhsFun]=hdl();
+                   for indexCol=1:c
+                       for indexBlock=1:ntst*ncol+1
+                            for indexRowRE=1:d1
+                                parametersLine=num2cell(obj.pointloader.session.settings.fields.parameters.value);
+                                solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+d2*(sessionGDS.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun{indexRowRE}(0,solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)),indexCol),parametersLine{:});
+                            end
                         end
-                    end
+                   end
                end
            end
            %-_-_-_-_-_-_%

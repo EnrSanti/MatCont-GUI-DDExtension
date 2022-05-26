@@ -8,6 +8,7 @@ out{6} = @hessiansp;
 out{7} = @der3;
 out{8} = [];
 out{9} = [];
+out{10}= @x0;
 
 % --------------------------------------------------------------------------
 function dydt = fun_eval(t,kmrgd,par_A,par_B,par_C)
@@ -68,3 +69,5 @@ tens3(:,:,3,3) =tens39;
 function tens4  = der4(t,kmrgd,par_A,par_B,par_C)
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_A,par_B,par_C)
+function userfun1=x0(t,kmrgd,par_A,par_B,par_C)
+	userfun1=X;
