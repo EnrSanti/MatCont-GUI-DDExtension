@@ -344,9 +344,16 @@ if ~isempty(gds.options.UserfunctionsInfo)
     end
 else siz=0;end
 
+%-_-_-_-_-_-_%
+if(gds.sys_type=="DDE")
+    fnOUT=fgetl(fid_read);
+    fnOUT=fnOUT(1:9)+"["+fnOUT(10:12)+",rhs]"+fnOUT(13:end);
+    fprintf(fid_write, strrep(fnOUT,'odefile',gds.system));
+else
+    fprintf(fid_write, strrep(fgetl(fid_read),'odefile',gds.system));
+end
+%-_-_-_-_-_-_%
 
-
-fprintf(fid_write, strrep(fgetl(fid_read),'odefile',gds.system));
 fprintf(fid_write, '\n');
 
 for i=1:9+siz

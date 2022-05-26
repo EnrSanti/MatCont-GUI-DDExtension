@@ -58,7 +58,8 @@ classdef SessionOutput
         
         function output(obj,xout,s,hout,fout,ind)
             global sOutput
-            %da sapere ntst;
+            %da sapere ntst;, e se invece si utilizzasse ncols di fout e si
+           % dividesse
             if (sOutput.enabled)
                 try
                     for i = 1:length(obj.outputlist)
