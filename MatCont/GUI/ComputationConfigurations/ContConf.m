@@ -328,7 +328,13 @@ classdef ContConf < CompConf
     methods(Static)
         function b = dimensionCheck(settings, dim)
             system = settings.system;
-            b = system.getDim() >= dim;
+            %-_-_-_-_-_-_%
+            if system.sys_type == "DDE"
+                b = 1;
+            else
+                b = system.getDim() >= dim;
+            end
+            %-_-_-_-_-_-_%
         end
     end
 end
