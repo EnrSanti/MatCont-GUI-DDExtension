@@ -384,17 +384,16 @@ if ~isempty(gds.options.UserfunctionsInfo)
            d = strmatch('res=',userline,'exact');
            if findstr('res',userline),res=1;end
            userline = strrep(userline,'res',hs1);
-           
-            %-_-_-_-_-_-_% 
+           %-_
            if(gds.sys_type=="DDE")
-                for indexEQ=(gds.dim-gds.no_RE)+1:(gds.dim) %foreach RE
+                for indexEQ=(gds.dim-gds.no_RE)+1:(gds.dim) %foreach DDE
                     %looking for a string with a non numerical nor
                     %alphabetical char behind and ahead, or with no such
                     %character behind and it's the end of the string
-                    userline = regexprep(userline,"(?<=\W)kmrgd\("+indexEQ+"\)(?=\W)|(?<=\W)kmrgd\("+indexEQ+"\)$","kmrgd("+(((gds.dim-gds.no_RE))*(gds.no_discretizationPoints+1)+indexEQ-(gds.dim-gds.no_RE))+")");
+                    userline = regexprep(str,"(?<=\W)kmrgd("+indexEQ+")(?<\W)|(?<=\W)kmrgd("+indexEQ+")$","kmrgd("+indiceEQ*(gds.no_discretizationPoints+1)+indexEQ+")")
                 end
            else
-            %-_-_-_-_-_-_% 
+               
            end
            if d==1
                fprintf(fid_write,'\t%s=0;\n',hs1);
