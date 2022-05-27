@@ -553,7 +553,7 @@ while feof(fid_read)==0  %qui
                         eq=equations(eqNo,:);
                         equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords,par+",");
                         equation=parseIntegral(equation);
-                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat((char(9)+equation),";"));  
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(equation,";"));  
                     end
 
                     %parsing the last equation and closing the eventual bracket "];"
@@ -2388,8 +2388,8 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords,params)
         eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",(i)),")")));
     end
     %var substitute REcoordinates
-    for i=DDEno+1:dim
-        eq=strrep(eq,coords(i),strcat("RHSre"+(i-DDEno)+"("+tempi+",state,"+params+")"));
+    for i=DDEno+1:REno
+        eq=strrep(eq,coords(i),strcat("RHSre"+(i-DDEno)+"("+"te"+")"));
     end
     
 

@@ -102,10 +102,14 @@ out=dot(commonFunctions.interpoly(-thetaCap*(1-(5))+5,ScaledNodes,[0;derState(2:
 
 
 function userfun1=ics(t,state,par_a)
+	yM=state(1:2);
 	userfun1 = yM(1)+2;
 function userfun2=qu(t,state,par_a)
+	yM=state(1:2);
 	userfun2 = yM(2);
 function userfun3=ips(t,state,par_a)
-	userfun3 = yM(3);
+	yM=state(1:2);
+	userfun3 = RHSre1(t,state,par_a);
 function userfun4=r(t,state,par_a)
-	userfun4 = yM(4);
+	yM=state(1:2);
+	userfun4 = RHSre2(t,state,par_a)+yM(2)+RHSre1(t,state,par_a)*2;

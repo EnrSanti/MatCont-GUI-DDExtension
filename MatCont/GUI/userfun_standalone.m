@@ -405,9 +405,9 @@ if ~isempty(gds.options.UserfunctionsInfo)
                 splittedCoords=split(cor_cor,",");
                 DDEcoords=splittedCoords(1:gds.dim-gds.no_RE);
                 REcoords=splittedCoords(gds.dim-gds.no_RE+1:end);
-                userline=systems_standalone('parseDDE',userline,cor_cor,"t",gds.dim,REcoords,DDEcoords);
-                userline=systems_standalone('parseIntegral',userline);
-                userline= hs1 +" = "+userline
+                userline=systems_standalone('parseDDE',userline,cor_cor,"t",gds.dim,REcoords,DDEcoords,par_par);
+                %write both yM and the function
+                userline= "yM=state(1:"+(gds.dim-gds.no_RE)+");"+char(10)+char(9)+hs1 +" = "+userline
            else
             %-_-_-_-_-_-_% 
            end
