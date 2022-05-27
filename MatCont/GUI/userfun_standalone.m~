@@ -368,7 +368,11 @@ if ~isempty(gds.options.UserfunctionsInfo)
    for i=1:size(gds.options.UserfunctionsInfo,2) %riscrive tutte le UF
        res=0;
        if isfield(gds,'userfunction') && ~isempty(gds.userfunction{i})
-           str_user = systems_standalone('replace_token',cellstr(gds.userfunction{i}));
+           if(gds.sys_type=="DDE")
+               [str_user,cor_cor,par_par]= renameforsym(gds.userfunction{i}, cor, pa);
+           else
+               str_user = systems_standalone('replace_token',cellstr(gds.userfunction{i}));
+           end
        else 
            str_user=cellstr('res=');
        end
@@ -378,22 +382,34 @@ if ~isempty(gds.options.UserfunctionsInfo)
        hs1 = sprintf('function userfun%d=%s(t,kmrgd%s)',i,gds.options.UserfunctionsInfo(i).name,newpar);
        fprintf(fid_write,'%s\n',hs1);
        hs1 = sprintf('userfun%d',i);
-       dim = size(str_user,1);
-       for j = 1:dim
-           userline = renameforsym(str_user{j}, '', strip(par, ','));
+       dim=0;
+       if(gds.sys_type=="DDE")
+          dim=1;
+       else
+          dim = size(str_user,1);
+       end
+        for j = 1:dim
+           if(~(gds.sys_type=="DDE"))
+                userline = renameforsym(str_user{j}, '', strip(par, ','));
+           else
+                userline=str_user;
+           end
            d = strmatch('res=',userline,'exact');
            if findstr('res',userline),res=1;end
            userline = strrep(userline,'res',hs1);
-           %-_
+           
+            %-_-_-_-_-_-_% 
            if(gds.sys_type=="DDE")
-                for indexEQ=(gds.dim-gds.no_RE)+1:(gds.dim) %foreach DDE
+                equation=parseDDE(userline,cor_cor,"t",gds.dim,REcoords,DDEcoords);
+                equation=parseIntegral(equation);
+                for indexEQ=(gds.dim-gds.no_RE)+1:(gds.dim) %foreach RE
                     %looking for a string with a non numerical nor
                     %alphabetical char behind and ahead, or with no such
                     %character behind and it's the end of the string
-                    userline = regexprep(str,"(?<=\W)kmrgd("+indexEQ+")(?<\W)|(?<=\W)kmrgd("+indexEQ+")$","kmrgd("+indiceEQ*(gds.no_discretizationPoints+1)+indexEQ+")")
+                    userline = regexprep(userline,"(?<=\W)kmrgd\("+indexEQ+"\)(?=\W)|(?<=\W)kmrgd\("+indexEQ+"\)$","kmrgd("+(((gds.dim-gds.no_RE))*(gds.no_discretizationPoints+1)+indexEQ-(gds.dim-gds.no_RE))+")");
                 end
            else
-               
+            %-_-_-_-_-_-_% 
            end
            if d==1
                fprintf(fid_write,'\t%s=0;\n',hs1);

@@ -101,11 +101,11 @@ derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
 out=dot(commonFunctions.interpoly(-thetaCap*(1-(5))+5,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1));
 
 
-function userfun1=ics(t,kmrgd,par_a)
-	userfun1=kmrgd(1)+2;
-function userfun2=qu(t,kmrgd,par_a)
-	userfun2=kmrgd(2);
-function userfun3=ips(t,kmrgd,par_a)
-	userfun3=kmrgd(23);
-function userfun4=r(t,kmrgd,par_a)
-	userfun4=kmrgd(24);
+function userfun1=ics(t,state,par_a)
+	userfun1 = yM(1)+2;
+function userfun2=qu(t,state,par_a)
+	userfun2 = yM(2);
+function userfun3=ips(t,state,par_a)
+	userfun3 = yM(3);
+function userfun4=r(t,state,par_a)
+	userfun4 = yM(4);
