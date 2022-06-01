@@ -175,17 +175,11 @@ classdef GUIPlotOutputter < handle
                             for indexRowRE=1:d1
                                 %getting the right parameters, converting
                                 %to a row vector & num2cell
-                                paramsRow=(solution.globals.(structDs).P0)';
-                                parametersLine=num2cell(paramsRow);      
-                                activeParams=solution.globals.(structDs).ActiveParams;
-                                
-                                parametersLine(activeParams)=num2cell(solution.x(end-length(activeParams)+1:end));
-                                %parametersLine(activeParams)=num2cell(solution.x(paramsRow(end-length(activeParams)+1:end)));
-                                %negli appunti che ho segnato ieri, era
-                                %come nella linea commentata, ma non mi
-                                %sembra sia corretto quel paramRow, nel
-                                %caso mi sia sbagliato adesso, decommentare
-                                %la linea e commentare quella sopra (182)
+                                parametersLine=num2cell((solution.globals.("eds").P0)'); %assegna p0 %e modifica parametersLine da incici parametri attivi so quanti e quali sono parametersLine[active par]=solution.x(pars(end-len(aciveparams)+1:end))%num2cell(obj.pointloader.session.settings.fields.parameters.value);
+                                activeParams
+                                for activeParIndex=1:length(solution.globals.("eds").ActiveParams)
+                                % parametersLine=parametersLine[active par]=solution.x(pars(end-len(aciveparams)+1:end))
+
                                 solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+d2*(sessionGDS.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun{indexRowRE}(0,solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)),indexCol),parametersLine{:});
                             end
                         end
