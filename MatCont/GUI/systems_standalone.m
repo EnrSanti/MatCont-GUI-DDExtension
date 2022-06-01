@@ -116,7 +116,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
             set(handles.edit14,'String',sprintf('%d',gds.no_discretizationPoints));
         end
         %setting the help tooltip
-        set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
+        set(handles.sys,'Tooltip',"Please insert the delays between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
         
     else
         %if the system is an ODE system, no tooltips for DDE are shown
@@ -988,9 +988,14 @@ set(0,'ShowHiddenHandles','off');
 %the dimension and position of the "sys" input panel (i.e. where you type
 %the system equations
 pos=[0.034 0.09 0.925 0.419];
-%-_-_-_-_-_-_%
-set(handles.sys,'Position',pos);
 
+try
+    set(handles.sys,'Position',pos);
+catch 
+    sysWindow = findall(groot,'Tag',"sys");
+    set(sysWindow,'Position',pos);
+end
+%-_-_-_-_-_-_%
 set(hf,'Value',0);set(hr,'Value',0);
 % --------------------------------------------------------------------
 function varargout = routine_Callback(h, eventdata, handles, varargin)
@@ -2065,7 +2070,7 @@ function displaySystem(str)
         for elementIndex=1:length(tagsToEnableDisable)
             set(viewsToEnableDisable(elementIndex),'Visible','off');             
         end
-        set(systemInputWindow(1),'ToolTipString',"Please insert DDEs with the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
+        set(systemInputWindow(1),'ToolTipString',"Please insert the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
         
         %set(systemInputWindow(1),'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
    
@@ -2089,9 +2094,14 @@ function displaySystem(str)
 % function that displays the panel to input the DDE specifc parameters
 % (also disabling the button to show the panel, since it's already visible)
 function DDEPanelOn()
+
     %getting the panel, and turning it visible
     ddePanel = findall(groot,'Tag',"ddePanel");
     set(ddePanel(1),'Visible','on');  
+    for i=1:5
+        numericRadio=findall(groot,'Tag',"n"+i);
+        numerically_Callback(numericRadio, {}, {}, {});
+    end
     
     
 % function that removes from the interface the panel to input the DDE specifc parameters
