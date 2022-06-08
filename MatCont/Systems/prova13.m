@@ -32,7 +32,7 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-GM = [dot(commonFunctions.interpoly(+thetaCap*(-3-(-1))+-1,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights),wCap)*(-1-(-3))+32;
+GM = [	dot(commonFunctions.interpoly(+thetaCap*(-3-(-1))+-1,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights),wCap)*(-1-(-3))+32;
 commonFunctions.interpoly(-2,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights)+yM(1)];
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
 KM = derState - kron([dot(11+commonFunctions.interpoly(+thetaCap*(-5-(-4))+-4,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(-4-(-5)).^2;
@@ -101,15 +101,11 @@ derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
 out=dot(commonFunctions.interpoly(-thetaCap*(1-(5))+5,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+32,wCap)*(5-(1));
 
 
-function userfun1=ics(t,state,par_a)
-	yM=state(1:2);
-	userfun1 = yM(1)+2;
-function userfun2=qu(t,state,par_a)
-	yM=state(1:2);
-	userfun2 = yM(2);
-function userfun3=ips(t,state,par_a)
-	yM=state(1:2);
-	userfun3 = RHSre1(t,state,par_a);
-function userfun4=r(t,state,par_a)
-	yM=state(1:2);
-	userfun4 = RHSre2(t,state,par_a)+yM(2)+RHSre1(t,state,par_a)*2;
+function userfun1=ics(t,kmrgd,par_a)
+	userfun1=kmrgd(1)+2;
+function userfun2=qu(t,kmrgd,par_a)
+	userfun2=kmrgd(2);
+function userfun3=ips(t,kmrgd,par_a)
+	userfun3=kmrgd(3);
+function userfun4=r(t,kmrgd,par_a)
+	userfun4=kmrgd(4)+kmrgd(2)+kmrgd(3)*2;

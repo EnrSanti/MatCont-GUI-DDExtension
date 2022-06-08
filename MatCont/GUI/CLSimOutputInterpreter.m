@@ -36,8 +36,18 @@ classdef CLSimOutputInterpreter
             
             labels = cell(dim, 2);
             for index = 1:dim
-                labels(index, :) = {coordinates{index}, @(t, y, s, ind, i) y(i, index)};
-                plotsel.declareSubCategory('coordinates', coordinates{index}, @(t, y, s, ind, i) y(ind, index))
+                %-_-_-_-_-_-_%
+                %getting the proper index for the coordinate
+                coordIndex=index;
+                if(system.sys_type=="DDE" && index>system.dim-system.no_RE) %if index>ddeNO
+                    no_DDE=system.dim-system.no_RE;
+                    m=system.no_discretizationPoints;
+                    coordIndex=no_DDE*(m+1)+index-no_DDE;
+                end
+                %-_-_-_-_-_-_%
+                labels(index, :) = {coordinates{index}, @(t, y, s, ind, i) y(i, coordIndex)};
+                plotsel.declareSubCategory('coordinates', coordinates{index}, @(t, y, s, ind, i) y(ind, coordIndex))
+                
             end
             numconfig.setLabels('coordinates', labels);
             

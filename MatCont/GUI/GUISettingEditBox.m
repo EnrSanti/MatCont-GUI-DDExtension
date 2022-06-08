@@ -46,7 +46,7 @@ classdef GUISettingEditBox < handle
                 m=session.settings.fields.system.no_discretizationPoints;
                 dim=session.settings.fields.system.dim;
                 no_RE=session.settings.fields.system.no_RE;
-                
+
                 RE_coords=[""];
                 actualIndex=[0];
                 %if the value modified is related to a coordinate
@@ -61,7 +61,7 @@ classdef GUISettingEditBox < handle
                     end
                 end
                 %-_-_-_-_-_-_%
-                if (~valid)
+                 if (~valid)
                     obj.performErrorDisplay();
                     fprintf(2, sprintf('[%s] ERROR(%s): %s, value: %s\n\n',datetime('now', 'format', 'HH:mm:ss'), obj.settingname, errormsg, string));
                     obj.settingChanged();
