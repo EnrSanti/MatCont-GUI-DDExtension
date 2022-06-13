@@ -103,7 +103,39 @@ classdef GUISettingEditBox < handle
                        
         
         function settingChanged(obj)
-           set(obj.handle , 'String' , obj.settings.getSetting(obj.settingname).toString()); 
+          %-_-_-_-_-_-_%
+            %extracting all the data
+            global session;
+            setting=session.settings;
+            if(session.settings.fields.system.sys_type=="DDE")
+                m=session.settings.fields.system.no_discretizationPoints;
+                dim=session.settings.fields.system.dim;
+                no_RE=session.settings.fields.system.no_RE;
+
+                RE_coords=[""];
+                actualIndex=[0];
+                %if the value modified is related to a coordinate
+                
+                    %for each RE, update index & save the old one
+                    for indiceRE=1:no_RE
+                        %getting the name of the RE coordinate
+                        %(co_nameCoordiante)
+                        RE_coords(indiceRE)="co_"+setting.fields.coord.coordinates{dim-no_RE+indiceRE};
+                        actualIndex(indiceRE)=dim-no_RE+indiceRE;
+                        if(RE_coords(indiceRE)==obj.settingname)
+                            obj.settings.fields.(RE_coords(indiceRE)).index=(dim-no_RE)*(m+1)+actualIndex(indiceRE)-(dim-no_RE);
+                            set(obj.handle , 'String' , obj.settings.getSetting(obj.settingname).toString()); 
+                            obj.settings.fields.(RE_coords(indiceRE)).index=actualIndex(indiceRE);
+                            return;
+                        end
+                    end
+               %if it's not a RE-coord
+               set(obj.handle , 'String' , obj.settings.getSetting(obj.settingname).toString()); 
+               return;
+            end
+            %-_-_-_-_-_-_%
+
+            set(obj.handle , 'String' , obj.settings.getSetting(obj.settingname).toString()); 
         end
         
         function destructor(obj)
@@ -121,4 +153,3 @@ classdef GUISettingEditBox < handle
     end
     
 end
-
