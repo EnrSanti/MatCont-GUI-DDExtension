@@ -17,7 +17,7 @@ TODO:
 
 -~~check wether in systems file use min/max~~
 
--~~continue code documentation
+-~~continue code documentation~~
 
 - eventual bug fixes & optimization
 
