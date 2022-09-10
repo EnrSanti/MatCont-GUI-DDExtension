@@ -8,9 +8,6 @@ out{6} = [];
 out{7} = [];
 out{8} = [];
 out{9} = [];
-out{10}= @prova2;
-out{11}= @prova3;
-out{12}= @prova4;
 rhs{1}=@RHSre1;
 rhs{2}=@RHSre2;
 
@@ -31,9 +28,9 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP2=commonFunctions.interpoly(-32,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1;
-GM = [3                                                         ;
-commonFunctions.interpoly(-2,ScaledNodes,[yM(3);VM(3:d2:end)],BaryWeights)+commonFunctions.interpoly(-1,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights);
+TMP2=commonFunctions.interpoly(-32,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1+RHSre1(t,state,par_a,par_b)+yM(1)+yM(2);
+GM = [	3                                                         ;
+	commonFunctions.interpoly(-2,ScaledNodes,[yM(3);VM(3:d2:end)],BaryWeights)+commonFunctions.interpoly(-1,ScaledNodes,[yM(2);VM(2:d2:end)],BaryWeights);
 dot(commonFunctions.interpoly(+thetaCap*(par_a-(par_b))+par_b,ScaledNodes,[yM(3);VM(3:d2:end)],BaryWeights),wCap)*(par_b-(par_a))];
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
 KM = derState - kron([(dot(commonFunctions.interpoly(+thetaCap*(par_a-(par_b))+par_b,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(par_b-(par_a))).^2+1;
@@ -84,7 +81,7 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):d2*(M+1)+d1*M);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP2=commonFunctions.interpoly(-32,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1;
+TMP2=commonFunctions.interpoly(-32,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1+RHSre1(t,state,par_a,par_b)+yM(1)+yM(2);
 out=(dot(commonFunctions.interpoly(+thetaCap*(par_a-(par_b))+par_b,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(par_b-(par_a))).^2+1;
 
 function out = RHSre2(t,state,par_a,par_b)
@@ -100,10 +97,7 @@ yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):d2*(M+1)+d1*M);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
-TMP2=commonFunctions.interpoly(-32,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1;
+TMP2=commonFunctions.interpoly(-32,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+1+RHSre1(t,state,par_a,par_b)+yM(1)+yM(2);
 out=dot(commonFunctions.interpoly(+thetaCap*(3.*par_a-(par_b))+par_b,ScaledNodes,[0;derState(1:d1:end)],BaryWeights)+commonFunctions.interpoly(+thetaCap*(3.*par_a-(par_b))+par_b,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+TMP2,wCap)*(par_b-(3.*par_a));
 
 
-function userfun1=prova2(t,kmrgd,par_a,par_b)
-	userfun1=kmrgd(3);
-function userfun2=prova3(t,kmrgd,par_a,par_b)

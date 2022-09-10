@@ -26,9 +26,9 @@ ScaledDD=UnitDDFun()/tau_max;
 BaryWeights=BaryWeightsFun();
 yM=state(1:d2);
 VM=state(d2+1:(M+1)*d2);
-GM = [yM(1)*par_a   ;
-yM(2)         ;
-commonFunctions.interpoly(-par_b,ScaledNodes,[yM(3);VM(3:d2:end)],BaryWeights)];
+GM = [	yM(1)*par_a+yM(2)                     ;
+	yM(2)+yM(3)                        ;
+commonFunctions.interpoly(-par_b,ScaledNodes,[yM(3);VM(3:d2:end)],BaryWeights)+yM(3)+yM(3)+yM(2)];
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
 dydt= [GM;(dMDM_DDE)*[yM;VM]];
 

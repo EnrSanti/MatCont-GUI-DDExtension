@@ -29,11 +29,11 @@ VM=state(d2+1:(M+1)*d2);
 UM=state((d2*M+d2+1):end);
 derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state
 TMP=3+yM(1);
-GM = yM(1)+3*par_a                                    ;
+GM = yM(1)+3*par_a+RHSre1(t,state,par_a)+RHSre1(t,state,par_a)                     ;
 dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));
 KM = derState - kron([dot(commonFunctions.interpoly(+thetaCap*(-3-(-2))+-2,ScaledNodes,[0;derState(1:d1:end)],BaryWeights),wCap)*(-2-(-3));
 dot(commonFunctions.interpoly(+thetaCap*(-7-(-5))+-5,ScaledNodes,[0;derState(2:d1:end)],BaryWeights)+commonFunctions.interpoly(+thetaCap*(-7-(-5))+-5,ScaledNodes,[yM(1);VM(1:d2:end)],BaryWeights)+TMP,wCap)*(-5-(-7))],ones(M,1));
-dydt= [GM;(1/(tau_max*tau_max)*dMDM_DDE)*[yM;VM];KM];
+dydt= [GM;(dMDM_DDE)*[yM;VM];KM];
 
 % --------------------------------------------------------------------------
 function state_eq=init(M,xeq,yeq)

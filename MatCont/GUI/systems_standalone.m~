@@ -2349,7 +2349,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords,params)
             times(j)=string(tempi(j));
             
             %substitute possible coord[time_var] with coord
-            eq=regexprep(eq, coords(i)+"\["+times(j)+"\]",coords(i));
+            eqIn=regexprep(eqIn, ,coord);
             %the regular expression of
             %cor_xyz[t(i)..cor_xyz[...]...] can recognise a nested
             %delay
@@ -2400,7 +2400,7 @@ function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords,params)
     end
     %var substitute REcoordinates
     for i=DDEno+1:dim
-        eq=strrep(eq,coords(i),strcat("RHSre"+(i-DDEno)+"("+tempi+",state"+extractBefore(params,strlength(params))+")"));
+        eq=strrep(eq,coords(i),strcat("RHSre"+(i-DDEno)+"("+tempi+",state,"+params+")"));
     end
     
 
