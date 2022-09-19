@@ -10,6 +10,8 @@ Currently mutliple DELAY PARAMETERs should be accepted, constants are also allow
 Please note that when inserting the DDE use square brackets [] to specify the delay (e.g. y'=parameter\*y\*y[t-TAU]).
 Renewal eqautions are also supported (note that delay equations must be written before renewal equations).
 
+Please consult the Chapter 4 of 'thesis.pdf' for a brief overview of the extension.
+
 TODO:
 
 -~~extend the system to accept multiple delay parameters~~
