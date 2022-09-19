@@ -130,22 +130,35 @@ classdef SimConf < CompConf
             system = settings.system;
             handles = system.handle();
             
-            %%
-              %qui -_-_-
+            %-_-_-_-_-_-_%
+            %if the system is a DDE one, the values of the coordinates must
+            %be repeated, since we don't have just dim equations now, but
+            %dim*(m+1)
+            %{
             if(system.sys_type=="DDE")
-                %obj.settings.fields.system.no_discretizationPoints
-                %parameter
 
+                %getting the value of coordinates
                 listaCoord=settings.fields.coord.value;
-                listaCoord=listaCoord(1,:);%da vedere se senza parametri da eccezione QUI
-                coords=listaCoord;
+                %da vedere se senza parametri da eccezione QUI
+                
+                %getting just the first real values for the coordinates
+                %(not the following m-dim zeroes)
+                listaCoord=listaCoord(1:settings.fields.system.dim);  
+                
+                %how many times we have to concatenate the inital values
+                %(m), since we have m+1 equations, but we already have the
+                %first
                 repetitions=system.no_discretizationPoints;
-                for i=1:repetitions
-                    coords=[coords; listaCoord];
-                end
-                settings.fields.coord.value=coords;
+                
+                DDEcoords=listaCoord(1:(system.dim-system.no_RE));
+                REcoords=listaCoord((system.dim-system.no_RE)+1:end);
+                %creating the row vector
+                %with the coordinates
+                listaCoord=[repmat(DDEcoords,[1 (repetitions+1)]),repmat(REcoords,[1 (repetitions)])];
+                settings.fields.coord.value=listaCoord;
             end
-                %
+            %-_-_-_-_-_-_%
+            %}
             x0 = settings.coord;
             x0 = x0(:); %make column vector
             param = num2cell(settings.parameters);

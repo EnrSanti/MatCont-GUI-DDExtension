@@ -1,13 +1,14 @@
+%a class containing static methods used in the fun_eval functions of the
+%systems and in the system_standalone.m to create the fun_eval
 classdef commonFunctions
     methods (Static)
-        function [w,x,D,q]=cheb(N,a,b)
         % Output:
         % x - N+1 Chebyshev nodes on [a,b] (x_0=b, x_N=a),
         % w - weights of the quadrature formula in [a,b],
         % D - differentiation matrix
         % q - row vector of the barycentric weights
         % see Trefethen
-
+        function [w,x,D,q]=cheb(N,a,b)
         if N==0
             x=1;
             D=0;
@@ -44,7 +45,41 @@ classdef commonFunctions
         w=w*abs(b-a)/2;
 
         % Barycentric weights
-        q=1./prod(dX'+eye(N+1)); %q=1./prod(dX'+eye(N+1)); % row vector of the barycentric weights
+        q=[1/2,ones(1,N-1),1/2].*(-1).^(0:N); %q=1./prod(dX'+eye(N+1)); % row vector of the barycentric weights
         end
+        
+        % Computes the value of the interpolating polynomial (Nodes,Values) in theta,
+        % using barycentric interpolation with Weights.
+        % (see Berrut, Trefethen, 2004)
+        %%%%%%% ATTENZIONE ALLA DIMENSIONE d1 o d2
+        function PP = interpoly(Theta,Nodes,Values,Weights)
+            
+            %{
+            TOLL=eps;
+            %getting the index and closest val to Theta
+            [closest_val,ii]=commonFunctions.closest_value(Nodes,Theta);
+            %if is sufficiently close approximate the value
+            closest_val=abs(Theta-closest_val);
+            if(closest_val<TOLL)
+                PP=Values(ii);
+                return;
+            end
+            %} 
+            n=size(Theta);
+            numer=zeros(n);
+            denom=zeros(n);
+            exact=zeros(n);
+            for j=1:length(Nodes)
+                xdiff=Theta-Nodes(j);
+                temp=Weights(j)./xdiff;
+                numer=numer+temp*Values(j);
+                denom=denom+temp;
+                exact(xdiff==0)=j;
+            end
+            PP=numer./denom;
+            jj=find(exact);
+            PP(jj)=Values(exact(jj));
+        end
+       
     end
 end

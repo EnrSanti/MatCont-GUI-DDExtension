@@ -2,20 +2,19 @@ function varargout = systems_standalone(varargin)
 % SYSTEM Application M-file for system.fig
 %    FIG = SYSTEM launch system GUI.
 %    SYSTEM('callback_name', ...) invoke the named callback.
-
-% Last Modified by GUIDE v2.5 16-Mar-2022 11:28:20
+    
+% Last Modified by GUIDE v2.5 18-May-2022 12:20:39
 global gds oldgds path_sys MC driver_window;
 
 %-_-_-_-_-_-_%
-% a global static variable
+% a global static variable used for string contatenation for the GUI
 sysString = " System";
 %-_-_-_-_-_-_%
-
 if nargin == 0 ||((nargin ==1)&&(strcmp(varargin{1},'new'))) % LAUNCH GUI
     h=gcbo;
     arg=get(h,'Tag');
     fig = openfig(mfilename,'reuse', 'invisible');
- % Use system color scheme for figure:
+  % Use system color scheme for figure:
 set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
 
    if strcmp(arg,'systems_standalone')||((nargin ==1)&&strcmp(varargin{1},'new'))
@@ -87,9 +86,7 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     %to avoid the warning of an anomalous value in the dropdown menu
     set(handles.popupmenu3,'Value',1); %evito warining
     %-_-_-_-_-_-_%
-    
     set(fig, 'visible', 'on');
-    
     %-_-_-_-_-_-_%
     %un gds c'è, è vuoto se è premuto su "new" oppure quello caricato
     %se è stato premuto su edit, quindi, se non sono nel primo caso carico
@@ -103,19 +100,27 @@ set(fig,'Color',get(0,'DefaultUicontrolBackgroundColor'));
     sys_type=gds.sys_type;
     if(~strcmp(sys_type, ''))
         displaySystem(sys_type); %fa tutti icasi
-        DDEPanelOff();
+        %DDEPanelOff();
         lockMenuType(handles);
     end
-    %setto il valore corretto nella entry delledits
+    %restoring the session by setting the proper values in the fields of
+    %the edit window for the system
     if(strcmp(sys_type, 'DDE'))
+        %setting the number of discretization points of the system
         set(handles.noDiscPoints,'String',sprintf('%d',gds.no_discretizationPoints));
-        set(handles.sys,'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
-        [r,~]=size(gds.parameters);
-        pos=r-gds.no_delays+1;
-        disp(strjoin(gds.parameters(pos:end,1),","));
-        set(handles.delayPar,'String',strjoin(gds.parameters(pos:end,1),","));
+        %trying to find if no_quadraturePoints in the gds of a DDE system
+        %existed, if not, use for now gds.no_discretizationPoints
+        try
+            set(handles.edit14,'String',sprintf('%d',gds.no_quadraturePoints));
+        catch e
+            set(handles.edit14,'String',sprintf('%d',gds.no_discretizationPoints));
+        end
+        %setting the help tooltip
+        set(handles.sys,'Tooltip',"Please insert the delays between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
+        
     else
-        set(handles.sys,'Tooltip','');
+        %if the system is an ODE system, no tooltips for DDE are shown
+        set(handles.sys,'Tooltip',"");
     end
     %-_-_-_-_-_-_%
     
@@ -146,7 +151,6 @@ function ok_Callback(h, eventdata, handles, varargin)
 % Stub for Callback of the uicontrol handles.ok.
 
 disp("scrivo sistema");
-scriptFrancescaCompatible=0;
 
 %variabili condivise "globali"
 global gds hds path_sys MC;
@@ -166,38 +170,33 @@ end
 
 %-_-_-_-_-_-_%
 %preparo in qualche modo gli input per memorizzarli
-%il tipo del sistema inserito
+
+%gettin the system type from the GUI
 type=systemType.getType(handles.popupmenu3.Value);
 
-
-%qui eventuamente modifica le cose y(t-t1)
+if(~(type=="ODE"))
+   type="DDE" 
+end
 
 
 %assigning the type to save
 gds.sys_type = type; 
+quadratureDegree=0;
+%if the system is a DDE system, then collect the values for the delay
+%parametres and the discretization points
 if(strcmp(type,"DDE"))
     gds.no_discretizationPoints = str2num(handles.noDiscPoints.String);
-    gds.no_delays= str2num(handles.delayPar.String);
+    quadratureDegree = str2num(handles.edit14.String);
 end
 %-_-_-_-_-_-_%
 
 %legge i vari input inseriti
 
-%le "variabili"/coordinate del sistema
-%disp(get(handles.coordinates,'String'));
 original_cor=filterspaces(get(handles.coordinates,'String'));
 
 
 %i parametri
-%disp(get(handles.parameters,'String'));
 original_pa=filterspaces(get(handles.parameters,'String'));
-if(strcmp(type,"DDE"))
-    taus=filterspaces(handles.delayPar.String);
-    original_pa=original_pa+","+taus;
-    gds.no_delays=count(taus,",")+1;
-    disp("numero di ritardi");
-    disp( gds.no_delays);
-end
 
 %le quazioni
 %disp(get(handles.sys,'String'));
@@ -231,7 +230,6 @@ gds.equations = equations;
 gds.parameters = toGdsStruct(pa);
 gds.coordinates = toGdsStruct(cor);
 
-%ah bo
 par = pa;
 
 %controllo se la lista di parametri è vuora o meno
@@ -259,9 +257,16 @@ end
 
 
 try
-    %disp(gds.equations+"prima");
-    string_sys=replace_sys_input(gds.equations);
-    %disp(string_sys);
+
+    %-_-_-_-_-_-_%
+    %if the system is a DDE one string_sys doesn't contain TEMP1; TEMP2;
+    %dydt; but only TEMP1 and TEMP2;
+    if(~(gds.sys_type=="DDE"))
+        string_sys=replace_sys_input(gds.equations);
+    else
+        string_sys=replace_sys_inputDDE(gds.equations);
+    end
+    %-_-_-_-_-_-_%
 catch
     errordlg('Equations are in the wrong order, compared to the coordinates.','Error')
     return
@@ -396,6 +401,9 @@ else siz=0;end
 
 
 
+
+RErhs="";
+RErhsContent="";
 h=0;
 filecontent = '';
 while feof(fid_read)==0  %qui
@@ -407,30 +415,35 @@ while feof(fid_read)==0  %qui
             fprintf(fid_write,'%s\n',string_handles{i,1});
             %filecontent = [filecontent,  sprintf('%s\n',string_handles{i,1})];
         end
+        if(gds.sys_type=="DDE")
+            REno=getREno(equations(length(string_sys)+1:end,:));
+            for indexREout=1:REno
+                 filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"rhs{"+indexREout+"}=@RHSre"+indexREout+";"); 
+            end
+        end
     end        
     
     matches=strrep(tline,'time,',t);
     matches=strrep(matches,'odefile',gds.system);
     matches=strrep(matches,',parameters',par);
     %scrive sul file del sistema:
-    %qui
+    %-_-_-_-_-_-_%
     if(~(gds.sys_type=="DDE" && (contains(matches,"function [")||contains(matches,"handles = feval") || contains(matches,"y0=[")|| contains(matches,"options = odeset")|| contains(matches,"tspan = ["))))
-        %da eliminare
-        if((scriptFrancescaCompatible && contains(matches,"function dydt")))
-            fprintf(fid_write,'%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,",aux,tau,M)")));  
+        
+        if(contains(matches,"function dydt") && gds.sys_type=="DDE")
+            filecontent = write_M_and_File_Content(fid_write,'\n\n%s\n',filecontent,strcat("function dydt = fun_eval (t,state",strcat(par,")")));
         else
-            if(contains(matches,"function dydt") && gds.sys_type=="DDE")
-               fprintf(fid_write,'%s\n',strcat("function dydt = fun_eval (t,state",strcat(par,")")));
+            if(matches==strcat("function out = ",gds.system) && gds.sys_type=="DDE") %then write [out,rhs]
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("function [out,rhs] = ",gds.system));
             else
-                %fine da eliminare
-                fprintf(fid_write,'%s\n',matches);  
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,matches);           
             end
         end
+
     end
+    %-_-_-_-_-_-_%    
         
-        
-    %qui
-    filecontent = [filecontent,  sprintf('%s\n',matches)]; 
+    %filecontent = [filecontent,  sprintf('%s\n',matches)]; 
     if isfield(gds,'userfunction')
         if ~isempty(findstr(matches,'varargout{1}=der5(coordinates,'))          
             for i = 1:size(gds.userfunction,2)
@@ -441,124 +454,197 @@ while feof(fid_read)==0  %qui
             end
         end
     end        
-    %disp(gds);
     if ~isempty(findstr(matches,'function dydt'))
         [dim,x]=size(string_sys);         
+        %if the system is a DDE one
         if(gds.sys_type=="DDE")
             
-            if(scriptFrancescaCompatible==0)
             %-_-_-_-_-_-_%
+                %getting the no. of RE equations in the system
+                REno=getREno(equations(length(string_sys)+1:end,:));
+                DDEno=gds.dim-REno;
             
-                fprintf(fid_write,'%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
+                gds.no_RE=REno;
+                gds.no_quadraturePoints=quadratureDegree;
+                
+                
+                %write in the file all the variables needed in the fun_eval
+                %method
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"[thetaCap,wCap]=fclencurtVals();");
+                RErhsContent="[thetaCap,wCap]=fclencurtVals();"+char(10);
+                %write in the m file the number of discretization points 
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
+                RErhsContent=RErhsContent+strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";"))+char(10);
+                %writing on file the number of RE and DDE
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d1=",strcat(sprintf('%d',REno),";")));
+                RErhsContent=RErhsContent+strcat("d1=",strcat(sprintf('%d',REno),";"))+char(10);
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("d2=",strcat(sprintf('%d',DDEno),";")));
+                RErhsContent=RErhsContent+strcat("d2=",strcat(sprintf('%d',DDEno),";"))+char(10);
+                
+                %non mi servono i parametri ma, le funzioni di ritardo..
+                %e.g. [t-2*TAU].. il massimo sarà 2TAU
+                
+                %getting the delay functions insered in the system
+                vettoreRitardi=getDelayFunctions(equations,cor,extractBefore(t,strlength(t)),gds.dim+length(string_sys));
+                %il vettore è però da trasformare in str
+                
+                %making the array a string in order to save it in the file
+                vettRitardi=RowVett2Str(vettoreRitardi);                
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("delayFunctions=",vettRitardi));
+                RErhsContent=RErhsContent+strcat("delayFunctions=",vettRitardi);
+                
+                %il massimo positivo sostanzialmente, perchè poi per
+                %max_tau moltiploco i nodi di cheb.
+                
+                %writing in the file
+                maxT="max(abs(delayFunctions));"; % equivalente a max(abs())
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat("tau_max=",maxT));
+                RErhsContent=RErhsContent+strcat("tau_max=",maxT)+char(10);
+                
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"ScaledNodes=UnitNodesFun()*tau_max;");
+                RErhsContent=RErhsContent+"ScaledNodes=UnitNodesFun()*tau_max;"+char(10);
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"ScaledDD=UnitDDFun()/tau_max;");
+                RErhsContent=RErhsContent+"ScaledDD=UnitDDFun()/tau_max;"+char(10);
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"BaryWeights=BaryWeightsFun();");
+                RErhsContent=RErhsContent+"BaryWeights=BaryWeightsFun();"+char(10);
+                
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"yM=state(1:d2);");
+                RErhsContent=RErhsContent+"yM=state(1:d2);"+char(10);
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"VM=state(d2+1:(M+1)*d2);"); %end _> (d2*(M+1)                   
+                RErhsContent=RErhsContent+"VM=state(d2+1:(M+1)*d2);"+char(10);
+                if(REno>0)
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state((d2*M+d2+1):end);");
+                    RErhsContent=RErhsContent+"UM=state((d2*M+d2+1):d2*(M+1)+d1*M);"+char(10);
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state");
+                    RErhsContent=RErhsContent+"derState=kron(ScaledDD(2:end,2:end),eye(d1))*UM; %DM*state"+char(10);
+                end
+                %calculate the following arrays
+                [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
+                
+                splittedCoords=split(cor,",");
+                DDEcoords=splittedCoords(1:DDEno);
+                REcoords=splittedCoords(DDEno+1:end);
+                
+                for temporanee=1:length(string_sys)
+                    nameTemp=split(string_sys{temporanee},"=");
+                    nameTemp=nameTemp{1};
+                    toWrite=parseIntegral(parseDDE(string_sys{temporanee},cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords,par+","));
+                    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,nameTemp+"="+toWrite);
+                    RErhsContent=RErhsContent+nameTemp+"="+toWrite+char(10);
+                end
+                %if the system has only one equation, write the rhs of GM
+                %without []
+                
+                endingGM="]";
+                openingGM="[";
+                
+                if(DDEno==1)
+                    endingGM="";
+                    openingGM="";
+                end
+                
                
+                writeGM="";
                 
-                %%
-
-
-                fprintf(fid_write,'%s\n',"UnitQuadweights=UnitQuadweightsFun();"); 
-                fprintf(fid_write,'%s\n',"UnitNodes=UnitNodesFun();"); 
-                fprintf(fid_write,'%s\n',"UnitDD=UnitDDFun();"); 
-                fprintf(fid_write,'%s\n',"BaryWeights=BaryWeightsFun();"); 
-                fprintf(fid_write,'%s\n',"d1=0;"); 
-                fprintf(fid_write,'%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")));
-                %da modificare se uso un vettore poi per passare i ritardi
-                maxT=strsplit(pa,",");
-                maxT=maxT(end);
-                fprintf(fid_write,'%s\n',strcat("tau_max=",strcat(maxT,";"))); 
-                fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
-                fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
-
-                %qui ci va il parse dell'equazioni
-                if(gds.dim==1) %non uso []
-                    equation=parseDDE(equations(1,:),cor,pa,gds.dim);
-                    fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
-                else
-                    fprintf(fid_write,'%s',"GM = @(x) [");
-                    %competa parser qui
-                    for eqNo=1:dim-1
+                %fa le dde
+                if(DDEno>0)
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat("GM = ",openingGM));  
+                    for eqNo=(length(string_sys)+1):length(string_sys)+DDEno-1
                         eq=equations(eqNo,:);
-                        equation=parseDDE(eq,cor,pa,gds.dim);
-                        fprintf(fid_write,'%s\n',strcat(equation,";"));
+                        equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords,par+",");
+                        equation=parseIntegral(equation);
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat((char(9)+equation),";"));  
                     end
-                    eqNo=dim;
+
+                    %parsing the last equation and closing the eventual bracket "];"
+                    eqNo=length(string_sys)+DDEno;
+
                     eq=equations(eqNo,:);
-                    equation=parseDDE(eq,cor,pa,gds.dim);
-                    fprintf(fid_write,'%s',equation);
-                    fprintf(fid_write,'%s\n',"];");
+                    equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords,par+",");
+                    equation=parseIntegral(equation);
+
+                    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,equation);  
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat(endingGM,";"));  
+                    %fine dde
+                    writeGM="GM;";
                 end
+                %write in the file (fun_eval)
+                filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_DDE=kron(ScaledDD(2:end,:),eye(d2));");  
+                    
+                %if the system contains also Renewal equations write the
+                %expression for KM, dMDM_RE, UM and the proper dy/dt else
+                %KM=[], and dy/dt without the renewal part
+                if(REno>0)             
+                    endingFM="]";
+                    openingFM="[";
 
+                    if(DDEno==1)
+                        endingGM="";
+                        openingGM="";
+                    end
+                    
+                    FM=openingFM;
+                    
+                    %gds.handler_REfirst="";
+                    REindex=1;
+                    %apri file
+                    %for each RE equaton
+                    for eqNo=length(string_sys)+DDEno+1:gds.dim+length(string_sys)-1
+                        eq=equations(eqNo,:); %eq ha lhs=rhs
+                        equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords,par+",");
+                        equation=parseIntegral(equation);
+                        
+                        RErhs=RErhs+"function out = RHSre"+REindex+"(t,state"+par+")"+char(10)+RErhsContent+"out="+equation+";"+char(10)+char(10);
+                        REindex=REindex+1; %++
+                        FM=FM+equation+";"+char(10);        
+                        
+                    end
 
-                fprintf(fid_write,'%s\n',"KM=[]; "); 
-                fprintf(fid_write,'%s\n',"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));"); 
-                fprintf(fid_write,'%s\n',"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];"); 
+                    %parsing the last equation and closing the eventual bracket "];"
+                    eqNo=gds.dim+length(string_sys);
 
-                   
-            
-    
+                
+                    eq=equations(eqNo,:); %eq ha lhs=rhs
+                    equation=parseDDE(parseREDot(eq),cor,extractBefore(t,strlength(t)),gds.dim,REcoords,DDEcoords,par+",");
+                    equation=parseIntegral(equation);
+                    
+                    RErhs=RErhs+"function out = RHSre"+REindex+"(t,state"+par+")"+char(10)+RErhsContent+"out="+equation+";"+char(10)+char(10);                        
+                    FM=FM+equation+"]";
+                    
+                    REstring=strcat("KM = derState - kron("+ FM + ",ones(M,1));");
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,REstring);
+                    
+                    %equation=parseDDE(eq,cor,extractBefore(t,strlength(t)),gds.dim);
+                    %equation=parseIntegral(equation,UnitNodes);
+                    
+                    
+                    
+                    %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"UM=state(1:d1*M);");
+                    %filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dMDM_RE=kron(UnitDD(2:end,:),eye(d1));");
+                    if(DDEno>0)
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= ["+writeGM+"(dMDM_DDE)*[yM;VM];KM];");
+                    else
+                        filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [KM];");
+                    end 
+                else
+                    filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"dydt= [GM;(dMDM_DDE)*[yM;VM]];");  
+                end
+               
+
             %-_-_-_-_-_-_%
-            else %da rimuovere
-                %-_-_-_-_-_-_%
-
-                fprintf(fid_write,'%s\n',strcat("M=",strcat(sprintf('%d',gds.no_discretizationPoints),";")));
-                
-                %%
-
-
-                fprintf(fid_write,'%s\n',"UnitQuadweights=UnitQuadweights();"); 
-                fprintf(fid_write,'%s\n',"UnitNodes=UnitNodes();"); 
-                fprintf(fid_write,'%s\n',"UnitDD=UnitDD();"); 
-                fprintf(fid_write,'%s\n',"BaryWeights=BaryWeights();"); 
-                fprintf(fid_write,'%s\n',"d1=0;"); 
-                fprintf(fid_write,'%s\n',strcat("d2=",strcat(sprintf('%d',gds.dim),";")));
-                fprintf(fid_write,'%s\n',"tau_max=tau;"); 
-                fprintf(fid_write,'%s\n',"yM=state((d1*M+1):(d1*M+d2));"); 
-                fprintf(fid_write,'%s\n',"VM=state((d1*M+d2+1):end);"); 
-
-                %qui ci va il parse dell'equazioni
-                if(gds.dim==1) %non uso []
-                    equation=parseDDE(equations(1,:),cor,pa,gds.dim);
-                    fprintf(fid_write,'%s\n',strcat("GM = @(x)", strcat (equation,";")));
-                else
-                    fprintf(fid_write,'%s',"GM = @(x) [");
-                    %competa parser qui
-                    for eqNo=1:dim-1
-                        eq=equations(eqNo,:);
-                        equation=parseDDE(eq,cor,pa,gds.dim);
-                        fprintf(fid_write,'%s\n',strcat(equation,";"));
-                    end
-                    eqNo=dim;
-                    eq=equations(eqNo,:);
-                    equation=parseDDE(eq,cor,pa,gds.dim);
-                    fprintf(fid_write,'%s',equation);
-                    fprintf(fid_write,'%s\n',"];");
-                end
-
-
-                fprintf(fid_write,'%s\n',"KM=[]; "); 
-                fprintf(fid_write,'%s\n',"dMDM_DDE=kron(UnitDD(2:end,:),eye(d2));"); 
-                fprintf(fid_write,'%s\n',"dydt= [GM(KM);(1/tau_max*dMDM_DDE)*[yM;VM]];"); 
-
-
             
-            end %fine delle cose da rimuovere
-                
-        else
+        else %if the system is an ODE one, write every equation
             for i=1:dim
-                  %scrive sul file del sistema:
-                  
                   fprintf(fid_write,'%s\n',string_sys{i}); 
                   filecontent = [filecontent,  sprintf('%s\n',string_sys{i})];
             end
         end
     end
     if ~isempty(findstr(matches,'handles'))
-        if(gds.sys_type=="DDE")
+        if(gds.sys_type=="DDE") %if the system is a DDE one, write the follwing init function
             %-_-_-_-_-_-_%
-            
-            fprintf(fid_write,'%s\n',"function state_eq=init(M,xeq,yeq)");         
-            fprintf(fid_write,'%s\n',"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];"); 
-           
-            
+            filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"function state_eq=init(M,xeq,yeq)");
+            filecontent = write_M_and_File_Content(fid_write,'%s\n',filecontent,"state_eq=[kron(ones(M,1),xeq); kron(ones(M+1,1),yeq)];");           
             %-_-_-_-_-_-_%
         else
             [dim,x]=size(string_init);
@@ -629,6 +715,40 @@ while feof(fid_read)==0  %qui
         end
     end
 end
+
+%-_-_-_-_-_-_% 
+%if the system is a DDE one, calculate
+%UnitNodes,UnitDD,BaryWeights and write the respective
+%functions in the file
+if(strcmp(gds.sys_type,"DDE"))
+    
+  
+    filecontent = write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitNodesFun'); 
+    filecontent = write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',ColVett2Str(UnitNodes)));   
+    
+    mat="[";
+    [rows , ~]=size(UnitDD);
+    for i=1:(rows-1)
+        mat=mat+RowVett2StrAux(UnitDD(i,:))+";";
+    end
+    mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];";
+    
+    filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = UnitDDFun');
+    filecontent=write_M_and_File_Content(fid_write,'%s',filecontent,strcat('out=',mat));
+       
+    filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function out = BaryWeightsFun');
+    filecontent=write_M_and_File_Content(fid_write,'%s\n\n',filecontent,strcat('out=',RowVett2Str(BaryWeights)));
+      
+    [thetaCap,wCap]=fclencurt(quadratureDegree+1,0,1);
+    filecontent=write_M_and_File_Content(fid_write,'\n%s\n',filecontent,'function [thetaCap,wCap] = fclencurtVals');
+    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,strcat('thetaCap=',ColVett2Str(thetaCap)));
+    filecontent=write_M_and_File_Content(fid_write,'%s\n\n',filecontent,strcat('wCap=',ColVett2Str(wCap)));
+    
+    filecontent=write_M_and_File_Content(fid_write,'%s\n',filecontent,RErhs);
+    
+end
+%-_-_-_-_-_-_%
+
 newlines = strfind(filecontent, 10);
 newline = newlines(1);
 gds.filecontent = filecontent(newline+1:end);
@@ -661,36 +781,7 @@ if ~isempty(gds.options.UserfunctionsInfo)
    end
 end            
 
-%-_-_-_-_-_-_%
-%saving on the .m file of the system the field "sys_type"
-fprintf(fid_write,'\n%s\n','function out = Systype');
-fprintf(fid_write,'%s\n',strcat('out="',strcat(gds.sys_type,'";')));
-if(strcmp(gds.sys_type,"DDE"))
-    %calcola
-    [UnitQuadweights,UnitNodes,UnitDD,BaryWeights]=commonFunctions.cheb(gds.no_discretizationPoints,-1,0); %questa è costante
-    fprintf(fid_write,'\n%s\n','function out = UnitQuadweightsFun');
-    fprintf(fid_write,'%s',strcat('out=',RowVett2Str(UnitQuadweights)));
-    %ok scritta la funzione UnitQuadweights
-    fprintf(fid_write,'\n%s\n','function out = UnitNodesFun');
- 
-    fprintf(fid_write,'%s',strcat('out=',ColVett2Str(UnitNodes)));
-    %ok scritta la funzione UnitNodes
-    
-    mat="[";
-    [rows , ~]=size(UnitDD);
-    for i=1:(rows-1)
-        mat=mat+RowVett2StrAux(UnitDD(i,:))+";"
-    end
-    mat=mat+RowVett2StrAux(UnitDD(rows,:))+"];"
-    fprintf(fid_write,'\n%s\n','function out = UnitDDFun');
-    fprintf(fid_write,'%s',strcat('out=',mat));
-    
-    
-    fprintf(fid_write,'\n%s\n','function out = BaryWeightsFun');
-    fprintf(fid_write,'%s',strcat('out=',RowVett2Str(BaryWeights)));
-    %ok scritta la funzione BaryWeights    
-end
-%-_-_-_-_-_-_%
+
 
 waitbar(0.95);
 fclose(fid_read);
@@ -703,8 +794,6 @@ gds.coordinates = toGdsStruct(original_cor);
 gds.parameters = toGdsStruct(original_pa);
 
 
-disp("salva ora");
-disp(file);
 
 save(file,'gds');
 gds.ok = true;
@@ -723,6 +812,7 @@ if gds.open.D2>0,for i=1:gds.open.D2,D2;end; end
 if gds.open.D3>0,for i=1:gds.open.D3,plotD3;end; end
 if gds.open.integrator==1;integrator;end
 %}
+
 cd(path_sys);cd ..;
 rehash;
 
@@ -894,8 +984,18 @@ if (val==1)
   delete(editp);  delete(statp);
 end
 set(0,'ShowHiddenHandles','off');
-pos=[0.0335 0.09 0.925 0.47];
-set(handles.sys,'Position',pos);
+%-_-_-_-_-_-_%
+%the dimension and position of the "sys" input panel (i.e. where you type
+%the system equations
+pos=[0.034 0.09 0.925 0.419];
+
+try
+    set(handles.sys,'Position',pos);
+catch 
+    sysWindow = findall(groot,'Tag',"sys");
+    set(sysWindow,'Position',pos);
+end
+%-_-_-_-_-_-_%
 set(hf,'Value',0);set(hr,'Value',0);
 % --------------------------------------------------------------------
 function varargout = routine_Callback(h, eventdata, handles, varargin)
@@ -945,7 +1045,7 @@ set(0,'ShowHiddenHandles','on');
 hf=findobj('Tag',strcat('f',num2str(num)));
 hn=findobj('Tag',strcat('n',num2str(num)));
 hn=findobj('Tag',strcat('n',num2str(num)));
-edit=findobj('Tag','edit');stat=findobjValue('Tag','stat');
+edit=findobj('Tag','edit');stat=findobj('Tag','stat');
 editp=findobj('Tag','editp');statp=findobj('Tag','statp');
 delete(edit);delete(stat);
 delete(editp);delete(statp);
@@ -953,7 +1053,11 @@ set(0,'ShowHiddenHandles','off');
 gds.der(3,num)=1;gds.der(1,num)=0;
 gds.der(2,num)=0;gds.der(4,num)=0;
 set(hf,'Value',0);set(hn,'Value',0);
-pos=[0.0335 0.34 0.925 0.23];
+%-_-_-_-_-_-_%
+%the dimension and position of the "sys" input panel (i.e. where you type
+%the system equations
+pos=[0.0335 0.34 0.925 0.185];
+%-_-_-_-_-_-_%
 set(handles.sys,'Position',pos);
 color=get(0,'defaultUicontrolBackgroundColor');
 switch num
@@ -1120,7 +1224,9 @@ if (~isempty(val) && (val==1))
     delete(edit);delete(stat);delete(editp);delete(statp);
 end
 set(0,'ShowHiddenHandles','off');
-pos=[0.0335 0.09 0.925 0.47];
+
+%qui modificati i valori delle dimensioni
+pos=[0.034 0.09 0.925 0.419];
 set(hsys,'Position',pos);
 gds.der(4,num)=1;gds.der(1,num)=0;
 gds.der(2,num)=0;gds.der(3,num)=0;
@@ -1284,10 +1390,6 @@ dim=size(gds.parameters,1);
 %ODE system
 try 
     set(handles.popupmenu3,'Value',systemType.getPositionOfType(gds.sys_type)); 
-    if(gds.sys_type=="DDE")
-        delays=gds.no_delays;
-        dim=dim-delays;
-    end
 catch
     set(handles.popupmenu3,'Value',systemType.getPositionOfType("ODE"));
 end
@@ -1514,6 +1616,10 @@ for t=1:dim
 end
 %---------------------------------------------------------------------------
 function [temp,eq] = parse_input(string,type)
+%-_-_-_-_-_-_%
+global gds %later used to check sys_type
+%-_-_-_-_-_-_%
+
 % can't parse empty strings, so first remove them here
 j=1;
 cleaned_string={};
@@ -1529,25 +1635,34 @@ dim = size(string,1);
 vars = size(type,2);
 temp='';eq='';
 p=1;s=1;
-for j=1:dim
+for j=1:dim %per ogni eq valore preso dall'entry appropriata
     k=[];  
-    for i=1:length(type)
+    for i=1:length(type) %coordinate prese dall'entry apposita (hanno ')
         teststring = string{j};
         if exist('strtrim','builtin')
             coordinate = strtrim(type{i});
         else
             coordinate = deblank(type{i});
         end
+        %-_-_-_-_-_-_%
+        if(gds.sys_type=="DDE")
+            coordinate=coordinate(1:end-1); %remove '
+        end
+        %-_-_-_-_-_-_%
         match = strcat('\<',coordinate,'\>');
-        pos = regexp(teststring,match);
+        pos = regexp(teststring,match); %non splitta sx e dx = 
+        % se ha trovato cor_xyz' ed è la prima posizione (in prima
+        % posizione) vedi se è l'ordine corretto
         if ~isempty(pos) && pos(1)==1
            k = 1;
-           tmpv = type{1};
+           tmpv = type{1}; %type di i??
+           %se la posizione della coordinata ed eq non coincide e SE è ' 
            if (vars-i ~= dim-j) && (tmpv(end) == '''')
                error('Equations are in the wrong order, compared to the coordinates.');
            end
         end
     end
+    
     if (findstr(string{j},'=')&(isempty(k)))
         temp{p,1} = string{j};
         h = 1; c = 0; p = p+1;
@@ -1653,13 +1768,13 @@ function init
 global gds;
     gds = [];
     %-_-_-_-_-_-_%
-    %added field
+    %added fields
     gds.sys_type=''; 
     gds.no_discretizationPoints = 0;
-    gds.no_delays=0; 
+    gds.no_RE = 0;
+    gds.no_quadraturePoints=0;
     %-_-_-_-_-_-_%
     
-    disp("gds con il sys type inizializzato");
     gds.coordinates = []; gds.parameters = [];
     gds.time{1,1} = 't';gds.time{1,2} = 0; gds.options = contset;
     gds.system = '';
@@ -1903,8 +2018,6 @@ function popupmenu3_CreateFcn(hObject, eventdata, handles)
    
     %turning off (not visible) the buttun to open the parameters panel (for
     %the DDE)
-    showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-    set(showPanelBtn(1),'Visible','off');
     
     
 % function called when the dropdownMenu option is changed (e.g. passing from a ODE to a DDE system)
@@ -1937,32 +2050,43 @@ function displaySystem(str)
     % getting the dropdown menu object
     popupMenu = findall(groot,'Tag',"popupmenu3");
     systemInputWindow = findall(groot,'Tag','sys');
-    
-    %if the DDE system has been selected
-    if(strcmp(str,"DDE")) 
+    %the tags related to the "from window & symbolically" & their
+    %respective radiobuttons
+    tagsToEnableDisable = ["text9","r1","r2","text14","f1","f2","f3","f4","f5"];
+    viewsToEnableDisable=findall(groot,'Tag',tagsToEnableDisable(1));
+    for elementIndex=2:length(tagsToEnableDisable)
+        viewsToEnableDisable(end+1)=findall(groot,'Tag',tagsToEnableDisable(elementIndex));
+    end
+    %if the DDE system has been selected or loaded
+    if(popupMenu.Value==systemType.getPositionOfType("DDE") || str=="DDE") 
         %set the proper value in the dropdown menu
         set(popupMenu(1),'Value',systemType.getPositionOfType("DDE"));
         %displaying the panel to input the parameters DDE specifc
         DDEPanelOn();
-        
-        %making the button to show the panel above visible
-        showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-        set(showPanelBtn(1),'Visible','on'); 
-        
+       
         %display the proper tooltip for entering the DDEs  
-        set(systemInputWindow(1),'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
         
+        %not visible symbolic & from window
+        for elementIndex=1:length(tagsToEnableDisable)
+            set(viewsToEnableDisable(elementIndex),'Visible','off');             
+        end
+        set(systemInputWindow(1),'ToolTipString',"Please insert the delay between [], e.g.: y'=PARAMETER*y+y[t-DELAY]");
+        
+        %set(systemInputWindow(1),'Tooltip',"Please insert DDEs with the delay between [], as follows: y'=PARAMETER*y+y[t-DELAY]");
+   
     else %if ODE has been selected
         %turning off the input panel for the DDE parameters
         DDEPanelOff();
-        %making the button to show the panel above NOT visible
-        showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-       
+        
+        %visible symbolic & from window
+        for elementIndex=1:length(tagsToEnableDisable)
+            set(viewsToEnableDisable(elementIndex),'Visible','on');             
+        end
         %don't display the tooltip for the DDEs, since we are inserting an
         %ODE system
-        set(systemInputWindow(1),'Tooltip',"");
-        
-        set(showPanelBtn(1),'Visible','off');
+        set(systemInputWindow(1),'ToolTipString','');
+        %set(systemInputWindow(1),'Tooltip',"");
+       
     end
 
     
@@ -1970,14 +2094,15 @@ function displaySystem(str)
 % function that displays the panel to input the DDE specifc parameters
 % (also disabling the button to show the panel, since it's already visible)
 function DDEPanelOn()
+
     %getting the panel, and turning it visible
     ddePanel = findall(groot,'Tag',"ddePanel");
     set(ddePanel(1),'Visible','on');  
+    for i=1:5
+        numericRadio=findall(groot,'Tag',"n"+i);
+        numerically_Callback(numericRadio, {}, {}, {});
+    end
     
-    %getting the panel button and disabling it
-    showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-    set(showPanelBtn(1),'Enable','off');
-
     
 % function that removes from the interface the panel to input the DDE specifc parameters
 % (also enabling the button to show the panel itself)    
@@ -1985,10 +2110,6 @@ function DDEPanelOff()
     %getting the panel, and turning it NOT visible 
     ddePanel = findall(groot,'Tag',"ddePanel");
     set(ddePanel(1),'Visible','off');
-
-    %getting the panel button and enabling it
-    showPanelBtn = findall(groot,'Tag',"DDEParametersButton"); %poi è da fare refactor e renderlo globale
-    set(showPanelBtn(1),'Enable','on');
     
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
@@ -2011,16 +2132,6 @@ function okParameters_Callback(hObject, eventdata, handles)
     DDEPanelOff();
 
 
-% function called when the OK button on the DDE panel is pressed (it
-% turns it off)
-
-% parameters: 
-% hObject    handle to okParameters (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-function cancelParamters_Callback(hObject, eventdata, handles)
-    DDEPanelOff();
 %-_-_-_-_-_-_%
 
 
@@ -2159,47 +2270,565 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 %-_-_-_-_-_-_%
-%qui
-    
+
+%function that given a row vector, returns the string that identifies it
+%with a ";" at the end
+%e.g. [1,2,3] -> "[1,2,3];"
+%vett: a row vector
 function strRow = RowVett2Str(vett)
-    strRow="["+RowVett2StrAux(vett)+"];"    
- 
+    strRow="["+RowVett2StrAux(vett)+"];";   
+
+%function that given a column vector returns a string identifying the
+%vector with a ";" at the end (e.g. [1;2;3] -> "[1;2;3]";)
+%vett: a column vector
 function strCol = ColVett2Str(vett)
-    [rows, ~]=size(vett)
+    %getting the size of the vector
+    [rows, ~]=size(vett);
+    %starting the string
     strCol="["+vett(1,:);
+    %for each element, concatenate it with ";"
     for i=2:(rows)
         strCol=strCol+";"+vett(i,:);
     end
+    %add at the end ];"
     strCol=strCol+"];";
-
+    
+%function that given a row vector, returns the string of all its elements
+%divided by ","
+%e.g. [1,2,3] -> "1,2,3"
+%vett: a row vector
 function strRow = RowVett2StrAux(vett)
+    %getting the 1st element
     strRow=vett(1);
+    
     vett=vett(2:end);
+    %for every element (not the first, concatenate it with a "," to the
+    %string"
     for el=vett
         strRow=strRow+","+el;
     end
     
-function eq = parseDDE(eqIn,coords,params,dim)
+%function that given a diff equation, the coordinates, times and the
+%dimension of the systems (i.e. how many total coordinates we have) returns
+%the string identifying the rhs of the original equation ready to be
+%insered in the systems file (according to Francesca's notation)
+%eqIn: a string containing the differential equation according to the
+%matcont format (typed in by the user)
+%coords: a string containing the coordinates of the system, divided by ","
+%(e.g "x,y,z")
+%tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+%dim: integer, the number of coordinates in the system
+function eq = parseDDE(eqIn,coords,tempi,dim,REcoords,DDEcoords,params)
+
+    REno=length(REcoords);
+    DDEno=length(DDEcoords);
+    %getting the coordinates (x,y...)
     [coords,~]=split(coords,",");
+    %getting the times
+    [tempi,~]=split(tempi,",");
+    
+    %getting how many time variables we have
+    [no_times,~]=size(tempi);
+    
+    %getting the rhs of the current equation considered
     [eq,~]=split(eqIn,"=");
     eq=eq(2);
+   
+    %getting the string itself
+    eq=cell2mat(eq);
+    
+    %for each coordinate substitute
     for i=1:dim
-        aux=dim;
-        aux=aux-i;
-        expression = coords(i)+"\[[^\]]*\]";
-        str="";
-        if(aux==0)
-            str=strcat("VM(end)");
-        else
-            str=strcat("VM(end-",strcat(sprintf("%d",aux),")"));
+        %aux=dim;
+        %aux=aux-i; ultima modifica
+        %for each time var
+        for j=1:no_times
+            
+            %if we have multiple time variables, extract one at the time
+            times(j)=string(tempi(j));
+            
+            %substitute possible coord[time_var] with coord
+            eq=regexprep(eq, coords(i)+"\["+times(j)+"\]",coords(i));
+            %the regular expression of
+            %cor_xyz[t(i)..cor_xyz[...]...] can recognise a nested
+            %delay
+            expression = coords(i)+"\["+times(j)+"\W(\["+times(j)+"\W[^\]]*\]|[^\]])*\]";
+            
+            
+            %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+            [inizio,fine]=regexp(eq,expression);
+            
+            %getting the value of how many matches we have found with the reg exp 
+            [~,matches]=size(inizio); %strings begin from 1...
+            
+            %foreach match substitute the expression:
+            for l=matches:-1:1
+                %we extract the delay from the string we have found
+                %(e.g. [t-g(x)] -> g(x))
+                replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+
+                %it's not needed to eval(replace) to actually evaluate the
+                %expression, anyway, creating the string to substitute to
+                %x[t-...] which corresponds to the call to the
+                %interpolation function
+                
+                %da portare fuori dal ciclo
+                approx="";
+                if(~(i>DDEno))%%dde coord
+                    approx="commonFunctions.interpoly("+replace+",ScaledNodes,[yM("+(i)+");VM("+(i)+":d2:end)],BaryWeights)";
+                else%re coord
+                    %modifica qui
+                    approx="commonFunctions.interpoly("+replace+",ScaledNodes,"+"[0;derState("+(i-DDEno)+":d1:end)],BaryWeights)";
+                end
+                %in the rhs we substitute the coordinate with a delay with
+                %the function that will compute its value (e.g y[t-2*TAU]
+                %-> interpoly(-2*TAU,...))
+                delayfound=extractBetween(eq,inizio(l),fine(l));
+                eq = convertStringsToChars(strcat(eq(1:inizio(l) - 1),strcat( approx, eq(inizio(l)+(fine(l)+1-inizio(l)):end))));
+                %eq=strrep(eq,delayfound,approx); 
+            end
         end
-        eq=regexprep(eq,expression,str);
+        
     end
-    %sostit []
-    for i=1:dim
-        eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",i),")")));
+    %now each coordinate with a delay has been substitued by the
+    %approximating value (that has to be computed)
+    
+    %for each coordinate (without delay) substitute yM(i) (DDE)
+    for i=1:DDEno
+        eq=strrep(eq,coords(i),strcat("yM(",strcat(sprintf("%d",(i)),")")));
     end
-    %var con yM(i) sostituite
+    %var substitute REcoordinates
+    for i=DDEno+1:dim
+        eq=strrep(eq,coords(i),strcat("RHSre"+(i-DDEno)+"("+tempi+",state"+extractBefore(params,strlength(params))+")"));
+    end
+    
+
+% function that given the equations (the whole system), the coordinates,
+% the time variables and the system dimension, returns  array containing
+% all the delay functions used in the system (with duplicates) TODO:
+% optimize
+%p eqsIn: an array of strings describing the whole system (typed by the
+% user) in the matcont format
+%tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+%dim: integer, the number of coordinates in the system
+function delayFunctionsns = getDelayFunctions(eqsIn,coords,tempi,dim)
+
+        delayFunctionsns="";
+        %getting the coordinates (x,y...)
+        [coords,~]=split(coords,",");
+        %getting the times
+        [tempi,~]=split(tempi,",");
+
+        %getting how many time variables we have
+        [no_times,~]=size(tempi);
+
+        %for each equation in the system
+        for eqIndex=1:dim
+            %getting the rhs of the current equation considered
+            [eq,~]=split(eqsIn(eqIndex,:),"=");
+            eq=eq(2);
+
+            %getting the string itself
+            eq=cell2mat(eq);
+
+            %for each coordinate substitute
+            for i=1:length(coords)
+                %for each time var
+                for j=1:no_times
+
+                    %if we have multiple time variables, extract one at the time
+                    times(j)=string(tempi(j));
+                    for kk=1:length(coords)
+                        %the regular expression of cor_xyz[t(i)...] not
+                        %between {...}
+                        exp2=coords(kk)+"\["+times(j)+"\W[^\]]*\]";
+                        expression = coords(i)+"\["+times(j)+"\W("+exp2+"|[^\]\[]*)\]";
+
+            
+                        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+                        [inizio,fine]=regexp(eq,expression);
+
+                        %getting the value of how many matches we have found with the reg exp 
+                        [~,matches]=size(inizio); %strings begin from 1...
+
+                        
+                        %foreach match substitute the expression:
+                        for l=1:matches
+                            %we extract the delay from the string we have found
+                            %(e.g. [t-g(x)] -> g(x))
+                            replace=extractBetween(eq,inizio(l)+1+strlength(coords(i))+strlength(times(j)),fine(l)-1);
+                            replace=replace{1};
+                            delayFunctionsns(end+1)=replace;
+                            
+                        end
+                    end
+                end
+
+            end
+        end
+        delayFunctionsns=checkIntegralVars(unique(delayFunctionsns(2:end)),eqsIn,dim,tempi);
+     
+        
+        
+        
+% function that given the delay functions of the system, the eqautions in the system 
+% and the number of the equation in the system removes from the delays
+% (vector of strings) the strings that contain a variable present in an
+% integral (i.e. from all the delays in the system we keep only the ones non
+% depending on differentiation variables) and adds to the vector the delays
+% found in the first extreme of integration
+% delays
+% eqsIn: an array of strings describing the whole system (typed by the
+% user) in the matcont format
+% delays: a string vector containing the delays in the system (e.g.
+% x'=...x[t-g(t)]...y[t-h(t)] ->[g(t),h(t)]
+% dim: an integer denotin the number of equations in the system
+% tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+function delays= checkIntegralVars(delays,eqsIn,dim,tempi)
+    
+    %getting the differetiation variables in the system
+    [integralVars,delaysToAdd]=getIntegralVars(eqsIn,dim,tempi);
+    
+    %the number of deleted delays
+    deleted=0;
+    %for each delay
+    for i=1:(length(delays))
+        %if the delay contains one of the differentiation variables
+        if(contains(delays(i-deleted),integralVars))
+            %delete element and increment the number of deleted elements
+            delays(i-deleted)=[]; %elimina elemento
+            deleted=deleted+1;
+        end
+    end 
+    %concat to create a unique vector of delays
+    delays=horzcat(delays,delaysToAdd);
+
     
     
+    
+% function that given the equation in the system, and the dimension of the
+% system returns the array of the differentiation variables used and the delays arising from the first extreme of integraion .
+% eqsIn: an array of strings describing the whole system (typed by the
+% user) in the matcont format
+% dim: an integer denotin the number of equations in the system
+%tempi: a string containing the time variables, divided by "," (e.g
+%"t1,t2")
+function [integralVars,delaysToAdd] = getIntegralVars(eqsIn,dim,tempi)
+
+    delaysToAdd=[""];
+    %initializing empty string array
+    integralVars=[""];
+    %expression recognising the structure of an integral
+    integralRegExp = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}"; 
+    integralPartsRegExp="{[^}]+}";
+
+    %for each equation
+    for eqIndex=1:dim
+        
+        %getting the rhs of the current equation considered
+        [eqIn,~]=split(eqsIn(eqIndex,:),"=");
+        eqIn=eqIn(2);
+
+        %getting the string itself
+        eqIn=cell2mat(eqIn);
+        %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+        [inizio,fine]=regexp(eqIn,integralRegExp); 
+
+        %getting the value of how many matches we have found with the reg exp 
+        [~,matches]=size(inizio); %strings begin from 1...
+
+        %foreach match (i.e. for each integral)
+        for l=1:matches
+            %setting the parameters and the regular expression to extract the
+            %contents between {}
+            integral=extractBetween(eqIn,inizio(l)+5,fine(l));
+
+            %inizio1 and fine1 mark the beginning and the end of each part of
+            %the integral, their len is 4 (a,b,function to integrate, delta)
+            [inizio1,fine1]=regexp(integral,integralPartsRegExp);
+
+            inizio1=cell2mat(inizio1);
+            fine1=cell2mat(fine1);
+            
+            %getting the various parts (the first and second extreme of intregration
+            %and the integration variable)
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);
+            b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
+            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
+
+            %adding the integration variable to the list to return
+            integralVars(end+1)=string(diff);
+            
+            %extracting the string from the cells
+            a=string(a);
+            b=string(b);
+            
+          
+            
+            %{
+            for timeNo=1:length(tempi)
+                if(contains(a,tempi(timeNo)))
+                    a=extractAfter(a,length(tempi(timeNo)));
+                end
+            end
+            %}
+            
+            %adding the extremese to the delay list to return (since
+            %depending on a,b >0 or a,b<0 \int_{a}^{b}{... x[t +/- s]}{s}
+            %in the first case (a,b>0 and x[t-s]) the maximum value of s
+            %will be in b, and in the second case (a,b<0 and x[t+s]) it
+            %will be in a
+            delaysToAdd(end+1)=a;
+            delaysToAdd(end+1)=b;
+        end
+    end
+    integralVars=integralVars(2:end); %removing the starting ""
+    delaysToAdd=delaysToAdd(2:end); %removing the starting ""
+    
+    
+    
+    
+%function that given a diff equation, gets the different parameters from an equation containing an
+%integral, format: \int_{a}^{b}{expression}{integration variable} and
+%returns the actual equation to insert in the .m file
+function eqIn = parseIntegral(eqIn) 
+    global gds;
+    expression = "\\int_{[^}]+}\^{[^}]+}{[^}]+}{[^}]+}";
+
+    %getting the arrays of the beginning and ending positions of each match found with the reg exp 
+    [inizio,fine]=regexp(eqIn,expression);
+
+    %getting the value of how many matches we have found with the reg exp 
+    [~,matches]=size(inizio); %strings begin from 1...
+
+    %the expression to get the different integral components    
+    expression="{[^}]+}";
+    
+    %foreach match (i.e. for each integral) (loop "backwards")
+    for l=matches:-1:1
+        %setting the parameters to extract the
+        %contents between {}
+        integral=extractBetween(eqIn,inizio(l)+5,fine(l));
+        
+        
+        %inizio1 and fine1 mark the beginning and the end of each part of
+        %the integral, their len is 4 (a,b,function to integrate, dx)
+        [inizio1,fine1]=regexp(integral,expression);
+        
+
+        %getting the various parts
+        a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
+        b=extractBetween(integral,inizio1(  2)+1,fine1(2)-1);
+        funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+        funzione=funzione{1};
+        diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
+        
+        %getting the whole integral (i.e. \int...{dx})
+        integral=(extractBetween(eqIn,inizio(l),fine(l)));
+        
+        %creating the string *(a-(b)) to not recompute it every time
+        b_a="*("+a+"-("+b+"))"; %le doppie pararentesi, a può avere un segno
+        
+        
+        %checking if funzione begins with the intergration varaible
+        %if(funzione inizia con var, sostituisci var con new_
+        if(length(cell2mat(regexp(extractBetween(funzione,1,length(diff{1})),diff)))>0)
+            eqIn=strrep(eqIn,integral,"\int_{"+a+"}^{"+b+"}"+"{var_int_NEW"+diff+extractBetween(funzione,length(diff{1})+1,length(funzione))+"}{"+diff+"}");
+        
+            integral=extractBetween(eqIn,inizio(l)+5,fine(l)+11);
+            expression="{[^}]+}";
+
+            %inizio1 and fine1 mark the beginning and the end of each part of
+            %the integral, their len is 4 (a,b,function to integrate, delta)
+            [inizio1,fine1]=regexp(integral,expression);
+
+
+            %getting the various parts again
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
+            b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
+            funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+            funzione=funzione{1};
+            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
+
+            %getting the whole integral (i.e. \int...{dx})
+            integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+            fine(l)=fine(l)+11;
+        
+        end
+        
+        
+        %checking if funzione ends with diff
+        lenDiff=length(diff{1});
+        if(length(cell2mat(regexp(extractBetween(funzione,length(funzione)-lenDiff,length(funzione)),diff)))>0)
+            eqIn=strrep(eqIn,integral,"\int_{"+a+"}^{"+b+"}"+"{"+extractBetween(funzione,1,length(funzione)-lenDiff)+"var_int_NEW"+diff+"}{"+diff+"}");
+        
+            integral=extractBetween(eqIn,inizio(l)+5,fine(l)+11);
+            expression="{[^}]+}";
+
+            %inizio1 and fine1 mark the beginning and the end of each part of
+            %the integral, their len is 4 (a,b,function to integrate, delta)
+            [inizio1,fine1]=regexp(integral,expression);
+
+
+            %getting the various parts
+            a=extractBetween(integral,inizio1(1)+1,fine1(1)-1);      
+            b=extractBetween(integral,inizio1(2)+1,fine1(2)-1);
+            funzione=extractBetween(integral,inizio1(3)+1,fine1(3)-1);
+            funzione=funzione{1};
+            diff=extractBetween(integral,inizio1(4)+1,fine1(4)-1);
+
+            %getting the whole integral (i.e. \int...{dx})
+            integral=(extractBetween(eqIn,inizio(l),fine(l)+11));
+        end
+        
+ 
+        [inizio2,fine2]=regexp(funzione,"\W"+diff+"(?=\W)"); %lookahead
+        
+        [~,matches2]=size(inizio2); %strings begin from 1...
+
+       
+        %foreach match (i.e. for each var in the integral)
+        before="";
+        after="";
+        diff="var_int_NEW"+diff;
+        while(length(inizio2)>0)
+            ll=length(inizio2);
+            if(length(regexp(funzione(inizio2(ll)),"\W"))>0)
+                before=funzione(inizio2(ll));
+               
+            end
+            if(length(regexp(funzione(fine2(ll)+1),"\W"))>0)
+                after=funzione(fine2(ll)+1);
+               
+            end
+            substituteString=extractBetween(funzione,inizio2(ll),fine2(ll)+1);
+            findsubstitute=substituteString;
+            if(before=="^")
+                findsubstitute="\"+findsubstitute; %escaping ^
+                findsubstitute=cellstr(findsubstitute);
+            end
+            if(after=="^")
+                findsubstitute=extractBefore(substituteString,strlength(substituteString))+"\^"; %escaping ^
+                findsubstitute=cellstr(findsubstitute);
+            end
+            
+            [deleteInizio,deleteFine]=regexp(funzione,findsubstitute);
+            
+            %deleteing the initial positions of the same string (there will
+            %all be susbstitued)
+            [X,Y] = ismember(deleteInizio{1},inizio2);
+            inizio2(Y(X)) = [];
+            
+            %deleteing the final positions of the same string (there will
+            %all be susbstitued)
+            [X,Y] = ismember(deleteFine{1},fine2);
+            fine2(Y(X)) = [];
+            
+            
+            funzione=strrep(funzione,substituteString,before+diff+after);
+            funzione=funzione{1};
+        
+        end
+        
+        %riscala
+        fCap=strrep(funzione,diff,"thetaCap"+b_a+"+"+b);
+        
+        %susbstituing the intergral with dot(f^,weights)*(b-a)
+        %must substitute only the last
+        %eqIn=strrep(eqIn,integral,"dot("+fCap+",wCap)"+b_a);
+       
+        posizioni = strfind(eqIn, integral);
+        last = posizioni(end);
+        
+        actual_b_a="*("+b+"-("+a+"))"; %le doppie pararentesi, a può avere un segno
+        eqIn = strcat(strcat(extractBetween(eqIn,1,last - 1), "dot("+fCap+",wCap)"+actual_b_a), extractBetween(eqIn,last+strlength(integral),strlength(eqIn)));
+    end
+    
+
+%function that given an equation returns true iff the LHS doesn't contain
+%the derivative of a coordinate (i.e. if the equation is RE)
+%eq: equation of the system with the substituted coordinates
+function answ=isRE(eq)
+    answ=true;
+    [eqComponents,~]=strsplit(eq,"=");
+    if(contains(eqComponents{1},"'"))
+        answ=false;
+    end
+    
+%function that given the equations in the system returns the number of the
+%renewal equations in the system
+%equations: the system of equations with the substituted coordinates
+function no=getREno(equations)
+    global gds;
+    no=0
+    %for each equation in the system check if is an RE
+    for i=1:gds.dim
+       %the equation considered 
+       eq=equations(i,:) ;
+       if(isRE(eq))
+           no=no+1; %no++
+       end
+    end
+
+%function that given the file identificator of the file (opened) to write,
+%the format, the current content of the file and what to write, wites
+%content on the file and updates fileContent
+%fid_write: the file identificator of the openend file
+%format: a string representing the format of how to write the string on the
+%file
+%fileContent: a string containing the current content of the file, updated
+%after the file has been written
+%content: a string containing the new content to write on the file
+function fileContent = write_M_and_File_Content(fid_write,format,fileContent,content) 
+    fprintf(fid_write,format,content);   
+    fileContent = [fileContent,  sprintf(format,content)];
+%a function that given an equation (LHS=RHS) substitutes all the products,
+%exponents and divisions with the respetive component wise operation
+function eqIn = parseREDot(eqIn) 
+    eqIn=strrep(eqIn,"*",".*");
+    eqIn=regexprep(eqIn,"\^(?!{)",".^"); %non strrep, the integral has {}^{}...
+    eqIn=strrep(eqIn,"/","./");
+
+function string=replace_sys_inputDDE(string)
+    global gds;
+    if isempty(string)
+        string = '';
+        return
+    end
+    string_sys = cellstr(string);
+    string=''; temp = '';eq = '';
+    for j = 1:(gds.dim)
+        sys{j} = strcat(gds.coordinates{j,1},char(39));
+    end
+    [temp,eq] = parse_input(string_sys,sys);
+    num_temp = size(temp,1);
+    for i = 1:num_temp
+        string{i,1} = strcat(temp{i,1},';');
+    end
 %-_-_-_-_-_-_%
+
+
+
+function edit14_Callback(hObject, eventdata, handles)
+% hObject    handle to edit14 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit14 as text
+%        str2double(get(hObject,'String')) returns contents of edit14 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit14_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit14 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

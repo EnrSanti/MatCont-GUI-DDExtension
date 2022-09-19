@@ -52,8 +52,10 @@ classdef GUIPlotOutputterSim < handle
             
         end
         function output(obj, data, s, ind)
-
+            %data ora ha colonna1-> tempo e colonna 2-> matrice con le
+            %coorindate
             data = obj.getData(data, s, ind);
+            %data ha una row e una col con i dati da stampare
             data = obj.addPreviousPoint(data);
             obj.previouspoint = cellfun(@(x) {x(end)}, data);
             

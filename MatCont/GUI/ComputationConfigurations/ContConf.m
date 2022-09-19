@@ -207,6 +207,18 @@ classdef ContConf < CompConf
             options = obj.constructContOptions(options, settings);
             
             %do the actual continuation
+            %qui
+            %{
+            if(system.sys_type=="DDE")
+                x0=[x0(1,:);x0(12,:)];
+            end
+            
+            
+            %}
+            
+            
+            
+            
             [x, v, s, h, f] = obj.contfunction(obj.curvedefinition, x0, v0, options);
             if isempty(x); errormsg = ''; return; end
             
@@ -316,7 +328,13 @@ classdef ContConf < CompConf
     methods(Static)
         function b = dimensionCheck(settings, dim)
             system = settings.system;
-            b = system.getDim() >= dim;
+            %-_-_-_-_-_-_%
+            if system.sys_type == "DDE"
+                b = 1;
+            else
+                b = system.getDim() >= dim;
+            end
+            %-_-_-_-_-_-_%  
         end
     end
 end

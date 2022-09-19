@@ -198,6 +198,7 @@ classdef Session < handle
                 %lock down GUI to prevent input, preparing for computation
                 obj.lock(); drawnow
                 try
+                     
                     %produce new solution based on action (obtain in a computation-object)
                     [solution, errmsg, overwrite] = action.function(obj.settings, obj.solutionhandle.solution);
                     
@@ -222,7 +223,26 @@ classdef Session < handle
                             %create new path/filename
                             path = obj.solutionhandle.getDefaultName(obj);
                         end
+                        
+                   
+                        %ma rimuove colonne...
+                        
                         %write solution to file
+                        %{ 
+                        qui
+                        if(obj.settings.fields.system.sys_type=="DDE")
+                            %per ogni coord qui
+                            salva=obj.settings.fields.system.coordinates(1,:);
+                            for i=1:obj.settings.fields.system.dim
+                                for j=1:obj.settings.fields.system.no_discretizationPoints
+                                    current=salva{i}+"_"+j;
+                                    obj.settings.fields.system.coordinates{end+1}=current;
+                                end
+                            end
+                            obj.settings.fields.system.dim=obj.settings.fields.system.no_discretizationPoints*obj.settings.fields.system.dim+1;
+
+                        end
+                        %}
                         obj.solutionhandle.store(path, solution);
                         obj.pointloader.assignPath(path); %update references in pointloader, preceded by 'newLabel'
                     end

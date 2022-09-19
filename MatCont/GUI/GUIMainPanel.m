@@ -234,7 +234,12 @@ classdef GUIMainPanel < handle
         
         function syncValues(obj , session)
             %-_-_-_-_-_-_%
-            set(obj.labelstruct.class, 'String', session.getSystem().getSys_type()); 
+            %setting label to the right class of the system
+            if(session.getSystem().getSys_type()=="DDE")
+                set(obj.labelstruct.class, 'String',"Delay equation"); 
+            else
+                set(obj.labelstruct.class, 'String', session.getSystem().getSys_type());
+            end
             %-_-_-_-_-_-_%
             
             sh = session.getSolutionHandle();

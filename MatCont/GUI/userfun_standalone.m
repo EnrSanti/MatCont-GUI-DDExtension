@@ -3,11 +3,13 @@ function varargout = userfun_standalone(varargin)
 %    FIG = USERFUN launch userfun_standalone GUI.
 %    USERFUN('callback_name', ...) invoke the named callback.
 
-
 % Last Modified by GUIDE v2.0 04-Sep-2002 11:20:31
 global gds oldgds path_sys driver_window MC;
-if nargin == 0  % LAUNCH GUI
 
+
+if nargin == 0
+
+     % LAUNCH GUI
 	fig = openfig(mfilename,'reuse');
     oldgds = gds;
 	% Generate a structure of handles to pass to callbacks, and store it. 
@@ -15,20 +17,24 @@ if nargin == 0  % LAUNCH GUI
 	handles = guihandles(fig);
 	guidata(fig, handles);
     load_listbox1(handles);
-	% Wait for callbacks to run and window to be dismissed:
-	uiwait(fig);
-
+    
+   
+    % Wait for callbacks to run and window to be dismissed:
+    uiwait(fig);
+   
 	if nargout > 0
 		varargout{1} = fig;
 	end
 
 elseif ischar(varargin{1}) % INVOKE NAMED SUBFUNCTION OR CALLBACK
 
-	try
-		[varargout{1:nargout}] = feval(varargin{:}); % FEVAL switchyard
-	catch
-		disp(lasterr);      
-	end
+    
+        try
+            [varargout{1:nargout}] = feval(varargin{:}); % FEVAL switchyard
+        catch
+            disp(lasterr);      
+        end
+    
 end
 
 % --------------------------------------------------------------------
@@ -338,37 +344,73 @@ if ~isempty(gds.options.UserfunctionsInfo)
     end
 else siz=0;end
 
+%-_-_-_-_-_-_% 
+%write the proper "function [out,rhs]" 
+if(gds.sys_type=="DDE")
+    fnOUT=fgetl(fid_read);
+    fnOUT=fnOUT(1:9)+"["+fnOUT(10:12)+",rhs]"+fnOUT(13:end);
+    fprintf(fid_write, strrep(fnOUT,'odefile',gds.system));
+else
+    fprintf(fid_write, strrep(fgetl(fid_read),'odefile',gds.system));
+end
+%-_-_-_-_-_-_%
 
-
-fprintf(fid_write, strrep(fgetl(fid_read),'odefile',gds.system));
 fprintf(fid_write, '\n');
 
 for i=1:9+siz
     fprintf(fid_write,'%s\n',string_handles{i,1});
 end
+
 fprintf(fid_write, '%s', gds.filecontent);
 
 
 if ~isempty(gds.options.UserfunctionsInfo)    
-   for i=1:size(gds.options.UserfunctionsInfo,2)
+   for i=1:size(gds.options.UserfunctionsInfo,2) %riscrive tutte le UF
        res=0;
+       stateName="kmrgd";
        if isfield(gds,'userfunction') && ~isempty(gds.userfunction{i})
-           str_user = systems_standalone('replace_token',cellstr(gds.userfunction{i}));
+           if(gds.sys_type=="DDE")
+               stateName="state";
+               [str_user,cor_cor,par_par]= renameforsym(gds.userfunction{i}, cor, pa);
+           else
+               str_user = systems_standalone('replace_token',cellstr(gds.userfunction{i}));
+           end
        else 
            str_user=cellstr('res=');
        end
        [userline, ~, newpar] = renameforsym('', '', strip(par, ','));
        [~,~,newpar] = renameforsym('', '', strip(par, ','));
        newpar = strcat(',', newpar);
-       hs1 = sprintf('function userfun%d=%s(t,kmrgd%s)',i,gds.options.UserfunctionsInfo(i).name,newpar);
+       hs1 = sprintf('function userfun%d=%s(t,'+stateName+'%s)',i,gds.options.UserfunctionsInfo(i).name,newpar);
        fprintf(fid_write,'%s\n',hs1);
        hs1 = sprintf('userfun%d',i);
-       dim = size(str_user,1);
-       for j = 1:dim
-           userline = renameforsym(str_user{j}, '', strip(par, ','));
+       dim=0;
+       if(gds.sys_type=="DDE")
+          dim=1;
+       else
+          dim = size(str_user,1);
+       end
+        for j = 1:dim
+           if(~(gds.sys_type=="DDE"))
+                userline = renameforsym(str_user{j}, '', strip(par, ','));
+           else
+                userline=str_user;
+           end
            d = strmatch('res=',userline,'exact');
            if findstr('res',userline),res=1;end
            userline = strrep(userline,'res',hs1);
+           
+            %-_-_-_-_-_-_% 
+           if(gds.sys_type=="DDE")
+                splittedCoords=split(cor_cor,",");
+                DDEcoords=splittedCoords(1:gds.dim-gds.no_RE);
+                REcoords=splittedCoords(gds.dim-gds.no_RE+1:end);
+                userline=systems_standalone('parseDDE',userline,cor_cor,"t",gds.dim,REcoords,DDEcoords,par_par);
+                %write both yM and the function
+                userline= "yM=state(1:"+(gds.dim-gds.no_RE)+");"+char(10)+char(9)+hs1 +" = "+userline
+           else
+            %-_-_-_-_-_-_% 
+           end
            if d==1
                fprintf(fid_write,'\t%s=0;\n',hs1);
            else 

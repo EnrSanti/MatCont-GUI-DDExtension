@@ -9,7 +9,6 @@ classdef CompConf
            settings.addSetting('option_archive', CLSetting('Archive Filter', 2, InputRestrictions.INT_g0, 0, 5, 2, CLSettingsHelp.getHelp('option_archive') ));
            settings.addSetting('option_output', CLSetting('Output Interval', 1, InputRestrictions.INT_g0, 0, 5, 3, CLSettingsHelp.getHelp('option_output') ));
 
-           
            settings.addSetting('numericconfig', NumericConfig());
            settings.addSetting('previousplots', CLSettingPlotMemory());
            

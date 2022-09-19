@@ -8,9 +8,11 @@ out{6} = @hessiansp;
 out{7} = @der3;
 out{8} = [];
 out{9} = [];
+out{10}= @X0;
 
 % --------------------------------------------------------------------------
 function dydt = fun_eval(t,kmrgd,par_k1,par_kp2,par_kpp2,par_kp3,par_kpp3,par_k4,par_J3,par_J4,par_kp5,par_kpp5,par_k6,par_J5,par_n,par_m)
+cose=22;
 dydt=[par_k1-(par_kp2+par_kpp2*kmrgd(2))*kmrgd(1);
 (par_kp3+par_kpp3*kmrgd(3))*(1-kmrgd(2))/(par_J3+1-kmrgd(2))-par_k4*par_m*kmrgd(2)*kmrgd(1)/(par_J4+kmrgd(2));
 par_kp5+par_kpp5*(par_m*kmrgd(1))^par_n/(par_J5^par_n+(par_m*kmrgd(1))^par_n)-par_k6*kmrgd(3);];
@@ -90,3 +92,5 @@ tens3(:,:,3,3) =tens39;
 function tens4  = der4(t,kmrgd,par_k1,par_kp2,par_kpp2,par_kp3,par_kpp3,par_k4,par_J3,par_J4,par_kp5,par_kpp5,par_k6,par_J5,par_n,par_m)
 %---------------------------------------------------------------------------
 function tens5  = der5(t,kmrgd,par_k1,par_kp2,par_kpp2,par_kp3,par_kpp3,par_k4,par_J3,par_J4,par_kp5,par_kpp5,par_k6,par_J5,par_n,par_m)
+function userfun1=X0(t,kmrgd,par_k1,par_kp2,par_kpp2,par_kp3,par_kpp3,par_k4,par_J3,par_J4,par_kp5,par_kpp5,par_k6,par_J5,par_n,par_m)
+	userfun1=kmrgd(1);

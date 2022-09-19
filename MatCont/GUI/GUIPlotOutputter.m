@@ -72,6 +72,7 @@ classdef GUIPlotOutputter < handle
                         line(data{:}, 'Parent', obj.group,  obj.plotconfig.curve{:}, modification{:});
                     end
                 else
+                    
                     data = obj.getData(contdata, s, j:i);
                     line(data{:}, 'Parent', obj.group,  obj.plotconfig.curve{:});
                 end
@@ -144,7 +145,56 @@ classdef GUIPlotOutputter < handle
         
         
         function plotSolution(obj, solution)
+           global session;
            obj.reset();
+           
+           %-_-_-_-_-_-_%
+           sessionGDS=session.settings.fields.system; 
+           if(sessionGDS.sys_type=="DDE")
+               %recalculate first RE row(S)
+               [ntst,ncol]=solution.getDiscretization();
+               d1=sessionGDS.no_RE;
+
+               if(d1>0) %se non ha re non si fa
+                   %in globals.campi prendi nomi, togli cds, recupera
+                   %struct corretta
+                   contentGlobals=fieldnames(solution.globals);
+                   structDs=contentGlobals{1};
+                   if(strcmp(structDs,"cds"))
+                       structDs=contentGlobals{2};
+                   end
+                   
+                   %take the columns
+                   [r,c]=size(solution.x);
+                   d2=sessionGDS.dim-sessionGDS.no_RE;
+                   %handle to get the functions in the m file
+                   hdl=session.settings.fields.system.handle;
+                   [~,rhsFun]=hdl();
+                   for indexCol=1:c
+                       for indexBlock=1:ntst*ncol+1
+                            for indexRowRE=1:d1
+                                %getting the right parameters, converting
+                                %to a row vector & num2cell
+                                paramsRow=(solution.globals.(structDs).P0)';
+                                parametersLine=num2cell(paramsRow);      
+                                activeParams=solution.globals.(structDs).ActiveParams;
+                                
+                                parametersLine(activeParams)=num2cell(solution.x(end-length(activeParams)+1:end));
+                                %parametersLine(activeParams)=num2cell(solution.x(paramsRow(end-length(activeParams)+1:end)));
+                                %negli appunti che ho segnato ieri, era
+                                %come nella linea commentata, ma non mi
+                                %sembra sia corretto quel paramRow, nel
+                                %caso mi sia sbagliato adesso, decommentare
+                                %la linea e commentare quella sopra (182)
+                                solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+d2*(sessionGDS.no_discretizationPoints+1)+indexRowRE,indexCol)=rhsFun{indexRowRE}(0,solution.x((d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)*(indexBlock-1)+(1:(d2*(sessionGDS.no_discretizationPoints+1)+d1*sessionGDS.no_discretizationPoints)),indexCol),parametersLine{:});
+                            end
+                        end
+                   end
+               end
+           end
+           %-_-_-_-_-_-_%
+           
+           
            obj.output({solution.x, solution.h, solution.f}, solution.s(1), 1:size(solution.x, 2));
            
            for i = 2:length(solution.s)-1

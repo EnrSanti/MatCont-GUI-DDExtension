@@ -76,12 +76,27 @@ classdef CLContOutputInterpreter
         end
         
         function [index, omap] = doCycle(obj, coordinates, ntst, ncol, dim, omap, numconfig, plotsel)
-            
-            for i = 1:length(coordinates)
-                omap.x{i} =  coordinates{i};  %['coordinate ' coordinates{i}];
+       
+            global session;
+            %-_-_-_-_-_-_%
+            if(session.settings.fields.system.sys_type=="DDE")
+                m=session.settings.fields.system.no_discretizationPoints;
+                no_RE=session.settings.fields.system.no_RE;
+                dim=session.settings.fields.system.dim;
+                no_DDE=dim-no_RE;
+                for i = 1:length(coordinates)
+                    if(i>no_DDE) %RE
+                        omap.x{no_DDE*(m+1)+i-no_DDE} =  coordinates{i};  
+                    else %DDE
+                        omap.x{i} =  coordinates{i}; 
+                    end
+                end   
+            else
+                for i = 1:length(coordinates)
+                    omap.x{i} =  coordinates{i};  %['coordinate ' coordinates{i}];
+                end
             end
-            
-            
+            %-_-_-_-_-_-_%
             
             if ntst == 0
                 numconfig.declareCategory('coordinates', 'Coordinates',1e0, true);
@@ -99,8 +114,28 @@ classdef CLContOutputInterpreter
                 for index = 1:length(coordinates)
                     coordinate = coordinates{index};
                     plotsel.declareSubCategory('coordinates', coordinate);
+                    %-_-_-_-_-_-_%
+                    % if the system is a DDE system, then the limit cycle
+                    % output file will result having rows for each equation
+                    % in the discretized system, so, the rows to be
+                    % considered are d1*M+d2*(M+1) (no. of DDE euqaiton*no of
+                    % discretizing points) aprat
+                    if(session.settings.fields.system.sys_type=="DDE")
+                        m=session.settings.fields.system.no_discretizationPoints;
+                        no_RE=session.settings.fields.system.no_RE;
+                        dim=session.settings.fields.system.dim;
+                        no_DDE=dim-no_RE;
+                        if(index>no_DDE)%allora RE
+                            selection = (no_DDE*(m+1))+(0:ntst*ncol)*((no_DDE)*(m+1)+m*no_RE) + index-no_DDE; %modifica
+                        else    
+                            selection = (0:ntst*ncol)*((no_DDE)*(m+1)+m*no_RE)+ index; %modifica
+                        end
+                    else %every other case done as usual
+                        selection = (0:ntst*ncol)*dim + index;
+                    end
+                    %check if ode (old) does have sys_type
+                    %-_-_-_-_-_-_%
                     
-                    selection = (0:ntst*ncol)*dim + index;
                     plotsel.declareItem('coordinates', coordinate, 'Default', coordinate, @(x, h, f, s, ind, i) x(selection, ind), true);
                     plotsel.declareItem('coordinates', coordinate, 'Min', sprintf('min(%s)', coordinate), @(x, h, f, s, ind, i) min(x(selection, ind)));
                     plotsel.declareItem('coordinates', coordinate, 'Max', sprintf('max(%s)', coordinate), @(x, h, f, s, ind, i) max(x(selection, ind)));
@@ -110,9 +145,40 @@ classdef CLContOutputInterpreter
                 
             end
             
+          if(session.settings.fields.system.sys_type=="DDE")
+               rep=ntst*ncol;
+               m=session.settings.fields.system.no_discretizationPoints;
+               no_RE=session.settings.fields.system.no_RE;
+               dim=session.settings.fields.system.dim;
+               no_DDE=dim-no_RE;
+               for index2=1:(rep)
+                   omap.x((no_DDE*(m+1))+index2*((no_RE)*(m)+(no_DDE)*(m+1))+(1:no_RE)) = coordinates(no_DDE+1:dim); 
+                   omap.x(index2*((no_DDE)*(m+1)+(m*no_RE))+(1:no_DDE)) = coordinates(1:no_DDE); %modifica e chiedi
+               end
+          else
+               omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
+          end
+
+           
+          %-_-_-_-_-_-_%
+          %if the system contains DDEs, then the index on which we find the
+          %parameters doesn't start at  dim*(ntst*ncol+1) + 1, but the
+          %number of equations discretizing the system has to be taken into
+          %account
+          if(session.settings.fields.system.sys_type=="DDE")
+                m=session.settings.fields.system.no_discretizationPoints;
+                no_RE=session.settings.fields.system.no_RE;
+                
+                index = ((dim-no_RE)*(m+1)+(m*no_RE))*(ntst*ncol+1) + 1; %modifica
+                disp("debug:dde no eccezione");
+           else
+               index = dim*(ntst*ncol+1) + 1;
+               disp("debug: ode no eccezione");
+          end
+          
+          %-_-_-_-_-_-_%
             
-            omap.x(dim+1:dim+(ntst*ncol)*dim) = repmat(coordinates, 1, ntst*ncol);
-            index = dim*(ntst*ncol+1) + 1;
+            
             
             
         end

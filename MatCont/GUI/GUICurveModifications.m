@@ -81,8 +81,12 @@ f = contdata{3};
 s = find(abs(f(:, index) - 1) < 1e-12, 1) + 1;
 
 mult = f(s:end, index); %extract multipliers
-[~, index] = min(abs(mult - 1)); %find multiplier 1 and remove
-mult(index) = [];
+
+%-_-_-_-_-_-_%
+%previously iii was index, so index was overwritten
+[~, iii] = min(abs(mult - 1)); %find multiplier 1 and remove
+mult(iii) = [];
+%-_-_-_-_-_-_%
 
 if any(isnan(f(:,index))) || all(abs(mult) < 1)
     mod = {};  %if stable or disabled, don't modify settings

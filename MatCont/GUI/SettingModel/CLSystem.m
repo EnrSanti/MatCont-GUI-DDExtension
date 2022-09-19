@@ -3,8 +3,12 @@ classdef CLSystem
     properties
         %-_-_-_-_-_-_%
         sys_type = '';
+        %to approximate delay equations
         no_discretizationPoints = 0;
-        no_delays = 0;
+        %of dim how many are REs
+        no_RE=0;
+        %to approximate integrals
+        no_quadraturePoints=0;
         %-_-_-_-_-_-_%
         name = ''
         coordinates = {}
@@ -28,8 +32,8 @@ classdef CLSystem
         function Mpoints = getNo_discretizationPoints(obj)
            Mpoints = obj.no_discretizationPoints; 
         end
-        function nDelays = getNo_delays(obj)
-           nDelays = obj.no_delays; 
+        function re_no = getNo_RE(obj)
+           re_no = obj.no_RE; 
         end
         %-_-_-_-_-_-_%
         function name = getName(obj)
@@ -64,8 +68,10 @@ classdef CLSystem
                 % se è ode non carico neanche
                 if(strcmp(obj.sys_type,"DDE"))
                     obj.no_discretizationPoints=gds.no_discretizationPoints;
-                    obj.no_delays=gds.no_delays;
+                    obj.no_RE=gds.no_RE;
                     disp("DDE "+obj.no_discretizationPoints);
+                else
+                    disp("ODE");
                 end
             catch 
                 obj.sys_type = systemType.getType(1);  %"ODE"
