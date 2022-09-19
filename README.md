@@ -1,13 +1,14 @@
 # MatCont-GUI-DDExtension
-The extension of MatCont user interface to systems of delay differential equations. Project done as Curricular Internship. 
+The extension of MatCont user interface allows users to insert and study systems containing delay differential equations.
+Project done as Curricular Internship. 
 
 CURRENT VERSION:
 
-The current version of the project SHOULD allow the user to insert systems of DDEs and analyse their different aspects (i.e. do all the operations previously doable on ODE systems).
+The current version of the project should allow the user to insert systems of DDEs and analyse their different aspects (i.e. do all the operations previously doable on ODE systems) through the GUI.
 
-Currently mutliple DELAY PARAMETERs should be ACCEPTED, constants are also allowed as delays (e.g. x[t-1]).
+Currently mutliple DELAY PARAMETERs should be accepted, constants are also allowed as delays (e.g. x[t-1]).
 Please note that when inserting the DDE use square brackets [] to specify the delay (e.g. y'=parameter\*y\*y[t-TAU]).
-Delay equations must be written before renewal equations.
+Renewal eqautions are also supported (note that delay equations must be written before renewal equations).
 
 TODO:
 
