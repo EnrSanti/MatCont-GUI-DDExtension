@@ -179,7 +179,7 @@ classdef GUIPlotOutputter < handle
                                 parametersLine=num2cell(paramsRow);      
                                 activeParams=solution.globals.(structDs).ActiveParams;
                                 
-                                parametersLine(activeParams)=num2cell(solution.x(end-length(activeParams)+1:end));
+                                parametersLine(activeParams)=num2cell(solution.x(end-length(activeParams)+1:end,indexCol));
                                 %parametersLine(activeParams)=num2cell(solution.x(paramsRow(end-length(activeParams)+1:end)));
                                 %negli appunti che ho segnato ieri, era
                                 %come nella linea commentata, ma non mi
